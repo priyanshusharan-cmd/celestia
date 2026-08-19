@@ -1,0 +1,421 @@
+import plotly.graph_objects as go
+import numpy as np
+import physics
+
+
+def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_values=None,
+                            selected_point=None, primary_names=("Primary 1", "Primary 2")):
+    """Inertial-frame playback where the complete system visibly revolves."""
+    fig = go.Figure()
+    dark = '#080d1e'
+    rng = np.random.default_rng(19)
+    fig.add_trace(go.Scatter(x=rng.uniform(-1.5, 1.5, 190), y=rng.uniform(-1.5, 1.5, 190), mode='markers',
+        marker=dict(size=rng.uniform(.6, 2.6, 190), color='#dce8ff', opacity=rng.uniform(.07, .36, 190)), hoverinfo='skip', showlegend=False))
+    theta_ring = np.linspace(0, 2 * np.pi, 180)
+    for radius, color in ((mu, 'rgba(255,209,102,.22)'), (1 - mu, 'rgba(114,230,222,.26)')):
+        fig.add_trace(go.Scatter(x=radius*np.cos(theta_ring), y=radius*np.sin(theta_ring), mode='lines',
+            line=dict(color=color, width=1, dash='dot'), hoverinfo='skip', showlegend=False))
+    fig.add_trace(go.Scatter(x=[0], y=[0], mode='markers', marker=dict(symbol='cross', size=9, color='rgba(224,237,255,.65)'), hoverinfo='skip', showlegend=False))
+
+    l_names = list(lagrange_points)
+    l_base = np.array([lagrange_points[name] for name in l_names])
+    p_base = np.array([[-mu, 0.0], [1 - mu, 0.0]])
+    if time_values is not None and trajectory_rotating is not None and len(time_values) == len(trajectory_rotating):
+        phase = 6 * np.pi * (time_values - time_values[0]) / max(time_values[-1] - time_values[0], 1e-9)
+    else:
+        phase = np.array([0.0])
+    def rotate(points, angle):
+        c, s = np.cos(angle), np.sin(angle)
+        return np.column_stack((points[:, 0] * c - points[:, 1] * s, points[:, 0] * s + points[:, 1] * c))
+    p0, l0 = rotate(p_base, phase[0]), rotate(l_base, phase[0])
+
+    # Dynamic object stack: primary halos, primary bodies, Lagrange constellation, target, path, probe halo, probe.
+    body_halo_trace = len(fig.data)
+    fig.add_trace(go.Scatter(x=p0[:, 0], y=p0[:, 1], mode='markers', marker=dict(size=[55, 25], color=['rgba(255,209,102,.13)', 'rgba(114,230,222,.15)']), hoverinfo='skip', showlegend=False))
+    body_trace = len(fig.data)
+    fig.add_trace(go.Scatter(x=p0[:, 0], y=p0[:, 1], mode='markers+text', text=list(primary_names), textposition='bottom center',
+        marker=dict(size=[31, 15], color=['#ffd166', '#72e6de'], line=dict(color='#edf5ff', width=1.5)), textfont=dict(color='#eaf1ff', family='DM Mono', size=10), hovertemplate='%{text}<extra></extra>', showlegend=False))
+    lag_trace = len(fig.data)
+    fig.add_trace(go.Scatter(x=l0[:, 0], y=l0[:, 1], mode='markers+text', text=l_names, customdata=l_names, textposition='top center',
+        marker=dict(symbol='diamond', size=10, color='#aa95ff', line=dict(color='#eeeaff', width=1)), textfont=dict(color='#f0edff', family='DM Mono', size=10), hovertemplate='%{text} equilibrium point<extra></extra>', showlegend=False))
+    target_index = l_names.index(selected_point) if selected_point in l_names else None
+    target_trace = None
+    if target_index is not None:
+        target_trace = len(fig.data)
+        fig.add_trace(go.Scatter(x=[l0[target_index, 0]], y=[l0[target_index, 1]], mode='markers', hoverinfo='skip', showlegend=False, marker=dict(symbol='circle-open', size=27, color='#72e6de', line=dict(width=1.5))))
+    if trajectory_rotating is not None and len(trajectory_rotating):
+        path0 = rotate(trajectory_rotating[:1], phase[0])
+        path_trace = len(fig.data)
+        fig.add_trace(go.Scatter(x=path0[:, 0], y=path0[:, 1], mode='lines', line=dict(color='#95f1ec', width=2.5), hoverinfo='skip', showlegend=False))
+        probe_halo_trace = len(fig.data)
+        fig.add_trace(go.Scatter(x=path0[:, 0], y=path0[:, 1], mode='markers', marker=dict(size=20, color='rgba(114,230,222,.18)'), hoverinfo='skip', showlegend=False))
+        probe_trace = len(fig.data)
+        fig.add_trace(go.Scatter(x=path0[:, 0], y=path0[:, 1], mode='markers', marker=dict(size=7, color='#f5ffff', line=dict(color='#72e6de', width=2)), hovertemplate='Live probe<extra></extra>', showlegend=False))
+        frame_indices = np.unique(np.linspace(0, len(trajectory_rotating)-1, min(140, len(trajectory_rotating))).astype(int))
+        dynamic_traces = [body_halo_trace, body_trace, lag_trace]
+        if target_trace is not None: dynamic_traces.append(target_trace)
+        dynamic_traces += [path_trace, probe_halo_trace, probe_trace]
+        frames = []
+        for i in frame_indices:
+            bodies, lags = rotate(p_base, phase[i]), rotate(l_base, phase[i])
+            history = np.array([rotate(trajectory_rotating[j:j+1], phase[j])[0] for j in range(max(0, i-42), i+1)])
+            data = [go.Scatter(x=bodies[:,0], y=bodies[:,1]), go.Scatter(x=bodies[:,0], y=bodies[:,1]), go.Scatter(x=lags[:,0], y=lags[:,1])]
+            if target_index is not None: data.append(go.Scatter(x=[lags[target_index,0]], y=[lags[target_index,1]]))
+            data += [go.Scatter(x=history[:,0], y=history[:,1]), go.Scatter(x=[history[-1,0]], y=[history[-1,1]]), go.Scatter(x=[history[-1,0]], y=[history[-1,1]])]
+            frames.append(go.Frame(name=str(i), data=data, traces=dynamic_traces))
+        fig.frames = frames
+    fig.update_layout(plot_bgcolor=dark, paper_bgcolor=dark, margin=dict(l=12,r=12,t=12,b=12), showlegend=False,
+        hoverlabel=dict(bgcolor='#132142', bordercolor='#72e6de', font=dict(color='#eff8ff', family='DM Mono', size=11)),
+        xaxis=dict(range=[-1.5,1.5], showgrid=True, gridcolor='rgba(155,181,240,.06)', showticklabels=False, zeroline=False, scaleanchor='y'),
+        yaxis=dict(range=[-1.5,1.5], showgrid=True, gridcolor='rgba(155,181,240,.06)', showticklabels=False, zeroline=False))
+    if trajectory_rotating is not None and len(trajectory_rotating) > 1:
+        fig.update_layout(updatemenus=[dict(type='buttons', direction='left', x=.015, y=.02, xanchor='left', yanchor='bottom', bgcolor='rgba(13,24,52,.9)', bordercolor='rgba(114,230,222,.42)', borderwidth=1,
+            buttons=[dict(label='▶  PLAY SYSTEM', method='animate', args=[None, {"frame":{"duration":58,"redraw":False},"transition":{"duration":0},"fromcurrent":True,"mode":"immediate"}]), dict(label='Ⅱ', method='animate', args=[[None], {"frame":{"duration":0},"mode":"immediate"}])])])
+    return fig
+
+
+def potential_terrain_figure(mu, lagrange_points, trajectory_rotating=None,
+                             selected_point=None, primary_names=("Primary 1", "Primary 2")):
+    """A manipulable 3D energy landscape for the same rotating-frame field."""
+    grid = np.linspace(-1.45, 1.45, 90)
+    x_grid, y_grid = np.meshgrid(grid, grid)
+    z_raw = physics.effective_potential(x_grid, y_grid, mu)
+    z_grid = np.clip(z_raw, 0, 4.2)
+    fig = go.Figure()
+    fig.add_trace(go.Surface(
+        x=x_grid, y=y_grid, z=z_grid, colorscale=[[0, '#0a1535'], [.35, '#17486a'], [.65, '#6a55a6'], [1, '#8de6d7']],
+        cmin=0, cmax=4.2, opacity=.92, showscale=False,
+        contours=dict(z=dict(show=True, usecolormap=False, color='rgba(212,230,255,.2)', width=1, highlight=False)),
+        hovertemplate='x %{x:.3f}<br>y %{y:.3f}<br>potential %{z:.3f}<extra></extra>'
+    ))
+    primary_x = [-mu, 1 - mu]
+    primary_z = [min(float(physics.effective_potential(x, 0, mu)), 4.2) + .08 for x in primary_x]
+    fig.add_trace(go.Scatter3d(
+        x=primary_x, y=[0, 0], z=primary_z, mode='markers+text', text=list(primary_names), textposition='top center',
+        marker=dict(size=[15, 10], color=['#ffd166', '#72e6de'], line=dict(color='#f0f7ff', width=1)),
+        textfont=dict(color='#e7efff', size=10, family='DM Mono'), hovertemplate='%{text}<extra></extra>', showlegend=False
+    ))
+    names, xs, ys = zip(*[(name, point[0], point[1]) for name, point in lagrange_points.items()])
+    zs = [min(float(physics.effective_potential(x, y, mu)), 4.2) + .025 for x, y in zip(xs, ys)]
+    fig.add_trace(go.Scatter3d(
+        x=xs, y=ys, z=zs, mode='markers+text', text=names, textposition='top center', customdata=names,
+        marker=dict(symbol='diamond', size=6, color='#af9aff', line=dict(color='#efeaff', width=1)),
+        textfont=dict(color='#f3f0ff', size=10, family='DM Mono'),
+        hovertemplate='%{text} equilibrium point<extra></extra>', showlegend=False
+    ))
+    if selected_point in lagrange_points:
+        x, y = lagrange_points[selected_point]
+        z = min(float(physics.effective_potential(x, y, mu)), 4.2) + .05
+        fig.add_trace(go.Scatter3d(x=[x], y=[y], z=[z], mode='markers', hoverinfo='skip', showlegend=False,
+                                   marker=dict(symbol='circle-open', size=11, color='#72e6de', line=dict(width=2))))
+    if trajectory_rotating is not None and len(trajectory_rotating):
+        path_z = np.clip(physics.effective_potential(trajectory_rotating[:, 0], trajectory_rotating[:, 1], mu), 0, 4.2) + .04
+        fig.add_trace(go.Scatter3d(x=trajectory_rotating[:, 0], y=trajectory_rotating[:, 1], z=path_z,
+                                   mode='lines', line=dict(color='#9cefff', width=4), opacity=.75, hoverinfo='skip', showlegend=False))
+        fig.add_trace(go.Scatter3d(x=[trajectory_rotating[0, 0]], y=[trajectory_rotating[0, 1]], z=[path_z[0]],
+                                   mode='markers', marker=dict(size=7, color='#f4ffff', line=dict(color='#72e6de', width=2)),
+                                   hovertemplate='Live probe<extra></extra>', showlegend=False))
+        frame_indices = np.unique(np.linspace(0, len(trajectory_rotating) - 1, min(120, len(trajectory_rotating))).astype(int))
+        fig.frames = [go.Frame(name=str(i), data=[go.Scatter3d(x=[trajectory_rotating[i, 0]], y=[trajectory_rotating[i, 1]], z=[path_z[i]])], traces=[len(fig.data) - 1]) for i in frame_indices]
+    fig.update_layout(
+        paper_bgcolor='#080d1e', margin=dict(l=0, r=0, t=0, b=0), showlegend=False,
+        scene=dict(
+            bgcolor='#080d1e',
+            xaxis=dict(showbackground=False, showgrid=True, gridcolor='rgba(150,180,240,.12)', showticklabels=False, title=''),
+            yaxis=dict(showbackground=False, showgrid=True, gridcolor='rgba(150,180,240,.12)', showticklabels=False, title=''),
+            zaxis=dict(showbackground=False, showgrid=True, gridcolor='rgba(150,180,240,.10)', showticklabels=False, title=''),
+            camera=dict(eye=dict(x=1.55, y=-1.65, z=.95)), aspectmode='cube'
+        )
+    )
+    if trajectory_rotating is not None and len(trajectory_rotating) > 1:
+        fig.update_layout(updatemenus=[dict(type='buttons', direction='left', x=.02, y=.02, xanchor='left', yanchor='bottom',
+            bgcolor='rgba(13,24,52,.88)', bordercolor='rgba(114,230,222,.4)', borderwidth=1,
+            buttons=[dict(label='▶  PLAY', method='animate', args=[None, {"frame":{"duration":55,"redraw":False},"transition":{"duration":0},"fromcurrent":True}]), dict(label='Ⅱ', method='animate', args=[[None], {"frame":{"duration":0},"mode":"immediate"}])])])
+    return fig
+
+def system_figure(mu, lagrange_points: dict, trajectory_rotating: np.ndarray = None,
+                   show_potential: bool = False, jacobi_constant_value: float = None,
+                   selected_point: str = None, primary_names: tuple = ("Primary 1", "Primary 2"),
+                   view_mode: str = "Orbital plane", time_values: np.ndarray = None) -> go.Figure:
+    """
+    Build a dark-themed 2D figure showing, in the rotating frame:
+    - primary 1 at (-mu, 0) as a marker, size scaled by (1-mu), color e.g. '#ffd166'
+    - primary 2 at (1-mu, 0) as a marker, size scaled by mu, color e.g. '#5eead4'
+    - barycenter at (0,0) as a small '+' marker
+    - each Lagrange point from lagrange_points dict as a diamond marker,
+      labeled with its name (L1..L5), color '#a78bfa'
+    - if trajectory_rotating is not None (shape (N,2)): plot it as a line
+      with a color gradient / fading opacity from start to end, plus a
+      bright marker at the final point representing the satellite's current
+      position
+    - if show_potential is True: add a contour trace of physics.effective_potential
+      evaluated on a grid over the visible area (use go.Contour with a subdued
+      colorscale, opacity ~0.4, placed BEHIND the other traces)
+    - dark background: plot_bgcolor and paper_bgcolor set to a dark navy
+      (e.g. '#0a0e1a'), gridlines subdued, equal aspect ratio (fig.update_yaxes
+      with scaleanchor='x')
+    - no title inside the figure (title will be handled by Streamlit later)
+    Return the Figure object. Do not call fig.show() — just return it.
+    """
+    if view_mode == "3D potential terrain":
+        return potential_terrain_figure(mu, lagrange_points, trajectory_rotating, selected_point, primary_names)
+    if view_mode == "Cinematic orbit":
+        return cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating, time_values, selected_point, primary_names)
+
+    fig = go.Figure()
+
+    dark_navy = '#080d1e'
+
+    # Fine orbital guide rings establish scale and make the rotating frame feel
+    # like an instrument rather than a plain scatter plot.
+    for radius, opacity in ((0.25, .10), (.5, .10), (.75, .08), (1.0, .12), (1.25, .06)):
+        fig.add_shape(
+            type='circle', xref='x', yref='y', x0=-radius, y0=-radius, x1=radius, y1=radius,
+            line=dict(color=f'rgba(114,230,222,{opacity})', width=1, dash='dot'), layer='below'
+        )
+    fig.add_shape(type='line', x0=-1.5, y0=0, x1=1.5, y1=0,
+                  line=dict(color='rgba(152,174,229,.15)', width=1, dash='dot'), layer='below')
+    
+    # Calculate grid for potential and Jacobi constant
+    grid_x = np.linspace(-1.5, 1.5, 100)
+    grid_y = np.linspace(-1.5, 1.5, 100)
+    X, Y = np.meshgrid(grid_x, grid_y)
+    Z_raw = np.zeros_like(X)
+    for i in range(X.shape[0]):
+        for j in range(X.shape[1]):
+            Z_raw[i, j] = physics.effective_potential(X[i, j], Y[i, j], mu)
+
+    # Potential contour
+    if show_potential:
+        # Limit max potential to prevent contours from getting scrunched near singularities
+        Z_clip = np.clip(Z_raw, None, 3.5) 
+
+        fig.add_trace(go.Contour(
+            x=grid_x,
+            y=grid_y,
+            z=Z_clip,
+            colorscale=[[0, '#101d42'], [.45, '#284c7a'], [.72, '#755fb1'], [1, '#92ece0']],
+            opacity=0.33,
+            showscale=False,
+            contours=dict(start=1.2, end=3.5, size=0.1),
+            hoverinfo='none',
+            name="Effective Potential"
+        ))
+        
+    if jacobi_constant_value is not None:
+        fig.add_trace(go.Contour(
+            x=grid_x,
+            y=grid_y,
+            z=2.0 * Z_raw - jacobi_constant_value,
+            showscale=False,
+            contours=dict(start=0, end=0, size=1, coloring='lines'),
+            line=dict(color='rgba(255,255,255,0.4)', width=1.5, dash='dash'),
+            hoverinfo='none',
+            name="Zero-Velocity Curve"
+        ))
+
+    
+    # Static starfield: a deterministic backdrop makes reruns feel calm rather than noisy.
+    np.random.seed(42)
+    star_x = np.random.uniform(-1.5, 1.5, 150)
+    star_y = np.random.uniform(-1.5, 1.5, 150)
+    fig.add_trace(go.Scatter(
+        x=star_x, y=star_y,
+        mode='markers',
+        marker=dict(size=np.random.uniform(1, 3, 150), color='#dbe6ff', opacity=np.random.uniform(0.08, 0.34, 150)),
+        hoverinfo='none',
+        name='Starfield'
+    ))
+
+    # The L4/L5 triangle is a quick visual read of the equilateral geometry.
+    l4 = lagrange_points.get('L4')
+    l5 = lagrange_points.get('L5')
+    if l4 and l5:
+        fig.add_trace(go.Scatter(
+            x=[-mu, 1.0 - mu, l4[0], -mu, None, 1.0 - mu, l5[0], -mu],
+            y=[0, 0, l4[1], 0, None, 0, l5[1], 0], mode='lines',
+            line=dict(color='rgba(168,149,255,.20)', width=1, dash='dot'),
+            hoverinfo='skip', showlegend=False
+        ))
+
+    # Barycenter
+    fig.add_trace(go.Scatter(
+        x=[0], y=[0],
+        mode='markers',
+        marker=dict(symbol='cross', color='rgba(255,255,255,0.4)', size=8),
+        name="Barycenter",
+        hoverinfo='none'
+    ))
+    
+    # Primaries
+    # Size logic: base size 10 + scale by mass
+    p1_size = 30 * (1 - mu) + 5
+    p2_size = 30 * mu + 10 # ensure it's not too small
+    
+    # Primary 1 Glow
+    fig.add_trace(go.Scatter(
+        x=[-mu], y=[0], mode='markers',
+        marker=dict(size=p1_size * 1.6, color='rgba(255, 209, 102, 0.15)'),
+        hoverinfo='none', showlegend=False
+    ))
+    
+    # Primary 1
+    fig.add_trace(go.Scatter(
+        x=[-mu], y=[0],
+        mode='markers',
+        marker=dict(
+            size=p1_size, 
+            color='#ffd166',
+            line=dict(width=3, color='rgba(255, 209, 102, 0.6)')
+        ),
+        name=primary_names[0], hovertemplate=f'{primary_names[0]}<br>x: %{{x:.4f}}<extra></extra>'
+    ))
+    
+    # Primary 2 Glow
+    fig.add_trace(go.Scatter(
+        x=[1.0 - mu], y=[0], mode='markers',
+        marker=dict(size=p2_size * 1.6, color='rgba(94, 234, 212, 0.15)'),
+        hoverinfo='none', showlegend=False
+    ))
+    
+    # Primary 2
+    fig.add_trace(go.Scatter(
+        x=[1.0 - mu], y=[0],
+        mode='markers',
+        marker=dict(
+            size=p2_size, 
+            color='#5eead4',
+            line=dict(width=3, color='rgba(94, 234, 212, 0.6)')
+        ),
+        name=primary_names[1], hovertemplate=f'{primary_names[1]}<br>x: %{{x:.4f}}<extra></extra>'
+    ))
+    
+    # Lagrange Points
+    l_names = []
+    l_xs = []
+    l_ys = []
+    for name, (x, y) in lagrange_points.items():
+        l_names.append(name)
+        l_xs.append(x)
+        l_ys.append(y)
+        
+    # Lagrange Points Glow
+    fig.add_trace(go.Scatter(
+        x=l_xs, y=l_ys,
+        mode='markers',
+        marker=dict(symbol='circle', size=18, color='rgba(167, 139, 250, 0.15)'),
+        hoverinfo='none', showlegend=False
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=l_xs, y=l_ys,
+        mode='markers+text',
+        marker=dict(
+            symbol='diamond', 
+            size=10, 
+            color='#a78bfa',
+            line=dict(width=2, color='rgba(167, 139, 250, 0.7)')
+        ),
+        text=l_names,
+        customdata=l_names,
+        textposition='top center',
+        textfont=dict(color='white', size=11, family='Courier New'),
+        name="Lagrange Points",
+        hovertemplate='%{text} equilibrium point<br>x: %{x:.4f}<br>y: %{y:.4f}<extra></extra>'
+    ))
+
+    # The selected target receives its own luminous targeting reticle.
+    if selected_point in lagrange_points:
+        target_x, target_y = lagrange_points[selected_point]
+        fig.add_trace(go.Scatter(
+            x=[target_x], y=[target_y], mode='markers', hoverinfo='skip', showlegend=False,
+            marker=dict(symbol='circle-open', size=27, color='#72e6de', line=dict(width=1.5, color='#72e6de'))
+        ))
+    
+    # Trajectory and playback. Plotly frames update only the probe marker, leaving
+    # the calculated path visible as a quiet reference beneath it.
+    if trajectory_rotating is not None and len(trajectory_rotating) > 0:
+        fig.add_trace(go.Scatter(
+            x=trajectory_rotating[:, 0],
+            y=trajectory_rotating[:, 1],
+            mode='lines',
+            line=dict(color='rgba(152, 232, 255, .72)', width=1.7),
+            opacity=0.7,
+            name="Trajectory"
+        ))
+        # This short, bright segment travels with the probe to sell the motion.
+        fig.add_trace(go.Scatter(
+            x=[trajectory_rotating[0, 0]], y=[trajectory_rotating[0, 1]], mode='lines',
+            line=dict(color='rgba(114,230,222,.95)', width=3), hoverinfo='skip', showlegend=False
+        ))
+        # A soft halo makes the active satellite easy to find without obscuring the map.
+        fig.add_trace(go.Scatter(
+            x=[trajectory_rotating[0, 0]], y=[trajectory_rotating[0, 1]],
+            mode='markers', marker=dict(size=18, color='rgba(114, 230, 222, .14)'),
+            hoverinfo='skip', showlegend=False
+        ))
+        fig.add_trace(go.Scatter(
+            x=[trajectory_rotating[0, 0]],
+            y=[trajectory_rotating[0, 1]],
+            mode='markers',
+            marker=dict(size=7, color='#ecfbff', line=dict(color='#72e6de', width=1.8)),
+            name="Satellite", hovertemplate='Probe<br>x: %{x:.4f}<br>y: %{y:.4f}<extra></extra>'
+        ))
+
+        # Keep animation lightweight even when integration returns many samples.
+        frame_indices = np.unique(np.linspace(0, len(trajectory_rotating) - 1, min(120, len(trajectory_rotating))).astype(int))
+        fig.frames = [
+            go.Frame(
+                name=str(i),
+                data=[
+                    go.Scatter(x=trajectory_rotating[max(0, i - 18):i + 1, 0], y=trajectory_rotating[max(0, i - 18):i + 1, 1]),
+                    go.Scatter(x=[trajectory_rotating[i, 0]], y=[trajectory_rotating[i, 1]]),
+                    go.Scatter(x=[trajectory_rotating[i, 0]], y=[trajectory_rotating[i, 1]])
+                ],
+                traces=[len(fig.data) - 3, len(fig.data) - 2, len(fig.data) - 1]
+            )
+            for i in frame_indices
+        ]
+
+    fig.update_layout(
+        plot_bgcolor=dark_navy,
+        paper_bgcolor=dark_navy,
+        font=dict(color='white'),
+        showlegend=False,
+        margin=dict(l=14, r=14, t=14, b=14),
+        hoverlabel=dict(bgcolor='#131f40', bordercolor='#72e6de', font=dict(color='#edf7ff', family='DM Mono', size=11)),
+        xaxis=dict(
+            scaleanchor='y',
+            scaleratio=1,
+            showgrid=True,
+            gridcolor='rgba(155,181,240,.055)',
+            zeroline=False, showticklabels=False, ticks='', range=[-1.5, 1.5], fixedrange=False
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor='rgba(155,181,240,.055)',
+            zeroline=False, showticklabels=False, ticks='', range=[-1.5, 1.5], fixedrange=False
+        )
+    )
+
+    if trajectory_rotating is not None and len(trajectory_rotating) > 1:
+        fig.update_layout(
+            updatemenus=[dict(
+                type='buttons', direction='left', x=0.015, y=0.02, xanchor='left', yanchor='bottom',
+                bgcolor='rgba(13, 24, 52, .82)', bordercolor='rgba(114,230,222,.3)', borderwidth=1,
+                pad=dict(r=7, t=5, b=5, l=7),
+                buttons=[
+                    dict(label='▶  PLAY', method='animate', args=[None, {"frame": {"duration": 55, "redraw": False}, "transition": {"duration": 0}, "fromcurrent": True, "mode": "immediate"}]),
+                    dict(label='Ⅱ', method='animate', args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}])
+                ]
+            )]
+        )
+    
+    return fig
+
+if __name__ == "__main__":
+    test_mu = 0.0121
+    l_points = physics.all_lagrange_points(test_mu)
+    fig = system_figure(test_mu, l_points, show_potential=True)
+    fig.write_html("test_viz.html")
+    print("test_viz.html created successfully.")
