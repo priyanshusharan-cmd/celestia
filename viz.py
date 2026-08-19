@@ -101,8 +101,16 @@ def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_v
     l_names = list(lagrange_points)
     l_base = np.array([lagrange_points[name] for name in l_names])
     p_base = np.array([[-mu, 0.0], [1 - mu, 0.0]])
+    if time_values is not None and trajectory_rotating is not None and len(time_values) == len(trajectory_rotating):
+        phase = 6 * np.pi * (time_values - time_values[0]) / max(time_values[-1] - time_values[0], 1e-9)
+    else:
+        phase = np.linspace(0.0, 2 * np.pi, 120)
+
+    def rotate(points, angle):
+        c, s = np.cos(angle), np.sin(angle)
+        return np.column_stack((points[:, 0] * c - points[:, 1] * s, points[:, 0] * s + points[:, 1] * c))
     
-    p0, l0 = p_base, l_base
+    p0, l0 = rotate(p_base, phase[0]), rotate(l_base, phase[0])
 
     # Sizes from actual masses via log scale — equal masses give equal sizes
     m1, m2 = body_masses
@@ -131,7 +139,7 @@ def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_v
         dynamic_traces.append(target_trace)
 
     if trajectory_rotating is not None and len(trajectory_rotating):
-        path0 = trajectory_rotating[:1]
+        path0 = rotate(trajectory_rotating[:1], phase[0])
         path_trace = len(fig.data)
         fig.add_trace(go.Scatter(x=path0[:, 0], y=path0[:, 1], mode='lines', line={'color': '#95f1ec', 'width': 2.5}, hoverinfo='skip', showlegend=False))
         probe_halo_trace = len(fig.data)
@@ -142,12 +150,25 @@ def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_v
         frame_indices = np.unique(np.linspace(0, len(trajectory_rotating)-1, min(140, len(trajectory_rotating))).astype(int))
         frames = []
         for i in frame_indices:
-            bodies, lags = p_base, l_base
-            history = trajectory_rotating[max(0, i-42):i+1]
+            bodies, lags = rotate(p_base, phase[i]), rotate(l_base, phase[i])
+            history = np.array([rotate(trajectory_rotating[j:j+1], phase[j])[0] for j in range(max(0, i-42), i+1)])
             data = [go.Scatter(x=bodies[:,0], y=bodies[:,1]), go.Scatter(x=bodies[:,0], y=bodies[:,1]), go.Scatter(x=lags[:,0], y=lags[:,1])]
             if target_index is not None: data.append(go.Scatter(x=[lags[target_index,0]], y=[lags[target_index,1]]))
             data += [go.Scatter(x=history[:,0], y=history[:,1]), go.Scatter(x=[history[-1,0]], y=[history[-1,1]]), go.Scatter(x=[history[-1,0]], y=[history[-1,1]])]
             frames.append(go.Frame(name=str(i), data=data, traces=dynamic_traces))
+        fig.frames = frames
+    else:
+        frames = []
+        for idx, angle in enumerate(phase):
+            bodies, lags = rotate(p_base, angle), rotate(l_base, angle)
+            data = [
+                go.Scatter(x=bodies[:, 0], y=bodies[:, 1]),
+                go.Scatter(x=bodies[:, 0], y=bodies[:, 1]),
+                go.Scatter(x=lags[:, 0], y=lags[:, 1]),
+            ]
+            if target_index is not None:
+                data.append(go.Scatter(x=[lags[target_index, 0]], y=[lags[target_index, 1]]))
+            frames.append(go.Frame(name=str(idx), data=data, traces=dynamic_traces))
         fig.frames = frames
 
     fig.update_layout(plot_bgcolor=dark, paper_bgcolor=dark, margin={'l': 12,'r': 12,'t': 12,'b': 12}, showlegend=False,
