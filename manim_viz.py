@@ -1,6 +1,20 @@
 import numpy as np  # type: ignore
-from manim import *  # type: ignore
-
+from manim import (  # type: ignore
+    BOLD,
+    DOWN,
+    PI,
+    WHITE,
+    Circle,
+    Dot,
+    Scene,
+    Text,
+    TracedPath,
+    VGroup,
+    VMobject,
+    ValueTracker,
+    config,
+    linear,
+)
 
 class OrbitalScene(Scene):
     def __init__(
