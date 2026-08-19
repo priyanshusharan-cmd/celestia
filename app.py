@@ -9,7 +9,7 @@ import viz
 
 st.set_page_config(layout="wide", page_title="Celestia · Orbital Lab", page_icon="✦", initial_sidebar_state="expanded")
 
-@st.dialog("Export Cinematic Video")
+@st.dialog("Export Cinematic Video", width="large")
 def export_video_dialog(mu, sat_rotating, actual_name1, actual_name2, m1_val, m2_val):
     st.write("Rendering a high-quality cinematic animation. Please wait...")
     if sat_rotating is not None:

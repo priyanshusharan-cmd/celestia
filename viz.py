@@ -233,9 +233,7 @@ def potential_terrain_figure(mu, lagrange_points, trajectory_rotating=None,
         }
     )
     if trajectory_rotating is not None and len(trajectory_rotating) > 1:
-        fig.update_layout(updatemenus=[{'type': 'buttons', 'direction': 'left', 'x': .02, 'y': .02, 'xanchor': 'left', 'yanchor': 'bottom',
-            'bgcolor': 'rgba(13,24,52,.88)', 'bordercolor': 'rgba(114,230,222,.4)', 'borderwidth': 1, 'showactive': False, 'font': {'color': '#72e6de', 'family': 'DM Mono', 'size': 11},
-            'buttons': [{'label': '▶', 'method': 'animate', 'args': [None, {"frame":{"duration":55,"redraw":True},"transition":{"duration":0},"fromcurrent":True}]}, {'label': 'Ⅱ', 'method': 'animate', 'args': [[None], {"frame":{"duration":0},"mode":"immediate"}]}]}])
+        add_playback_controls(fig)
     return fig
 
 def system_figure(mu, lagrange_points: dict, trajectory_rotating: np.ndarray = None,
