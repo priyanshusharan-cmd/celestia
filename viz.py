@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import physics
 
 
-def mass_to_size(m_earth: float, min_size: float = 16.0, max_size: float = 55.0) -> float:
+def mass_to_size(m_earth: float, min_size: float = 6.0, max_size: float = 24.0) -> float:
     """Map a mass in Earth masses to a marker pixel size using log10 scale.
     Moon (0.0123) → ~8px   Earth (1) → ~16px   Sun (332946) → ~38px.
     Two equal masses always give the same size.
@@ -28,6 +28,57 @@ def add_map_click_grid(fig):
     ))
 
 
+def add_playback_controls(fig):
+    """Add unified playback controls: Play/Pause toggle, Timeline toggle, and Speed dropdown."""
+    if len(fig.frames) < 2:
+        return
+        
+    base_dur = 55
+    speed_buttons = []
+    for speed_label, mult in [("0.25X", 4), ("0.5X", 2), ("1X", 1), ("1.5X", 1/1.5), ("2X", 0.5), ("4X", 0.25), ("10X", 0.1)]:
+        dur = int(base_dur * mult)
+        speed_buttons.append({
+            'label': speed_label,
+            'method': 'animate',
+            'args': [None, {"frame": {"duration": dur, "redraw": False}, "transition": {"duration": 0}, "mode": "immediate"}]
+        })
+
+    fig.update_layout(
+        updatemenus=[
+            {
+                'type': 'buttons', 'direction': 'right', 'x': 0.015, 'y': 0.02, 'xanchor': 'left', 'yanchor': 'bottom',
+                'bgcolor': 'rgba(13, 24, 52, .82)', 'bordercolor': 'rgba(114,230,222,.3)', 'borderwidth': 1,
+                'showactive': False, 'font': {'color': '#72e6de', 'family': 'DM Mono', 'size': 11},
+                'pad': {'r': 7, 't': 5, 'b': 5, 'l': 7},
+                'buttons': [
+                    {'label': '▶/Ⅱ', 'method': 'animate',
+                     'args': [None, {"frame": {"duration": 55, "redraw": False}, "transition": {"duration": 0}, "fromcurrent": True, "mode": "immediate"}],
+                     'args2': [[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}]},
+                    {'label': '⚙ Timeline', 'method': 'relayout',
+                     'args': [{'sliders[0].visible': True}],
+                     'args2': [{'sliders[0].visible': False}]}
+                ]
+            },
+            {
+                'type': 'dropdown', 'direction': 'up', 'x': 0.26, 'y': 0.02, 'xanchor': 'left', 'yanchor': 'bottom',
+                'bgcolor': 'rgba(13, 24, 52, .82)', 'bordercolor': 'rgba(114,230,222,.3)', 'borderwidth': 1,
+                'active': 2, 'font': {'color': '#72e6de', 'family': 'DM Mono', 'size': 11},
+                'pad': {'r': 7, 't': 5, 'b': 5, 'l': 7},
+                'buttons': speed_buttons
+            }
+        ],
+        sliders=[{
+            'active': 0, 
+            'steps': [{'method': 'animate', 'args': [[f.name], {'mode': 'immediate', 'frame': {'duration': 0, 'redraw': False}}]} for f in fig.frames],
+            'visible': False, 
+            'x': 0.015, 'y': -0.05, 'len': 0.97,
+            'currentvalue': {'visible': False},
+            'font': {'color': '#72e6de', 'family': 'DM Mono', 'size': 10},
+            'bgcolor': 'rgba(114,230,222,.3)',
+            'bordercolor': '#72e6de'
+        }]
+    )
+
 def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_values=None,
                             selected_point=None, primary_names=("Primary 1", "Primary 2"),
                             body_masses=(1.0, 0.0123)):
@@ -50,15 +101,8 @@ def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_v
     l_names = list(lagrange_points)
     l_base = np.array([lagrange_points[name] for name in l_names])
     p_base = np.array([[-mu, 0.0], [1 - mu, 0.0]])
-    if time_values is not None and trajectory_rotating is not None and len(time_values) == len(trajectory_rotating):
-        phase = 6 * np.pi * (time_values - time_values[0]) / max(time_values[-1] - time_values[0], 1e-9)
-    else:
-        phase = np.linspace(0.0, 2 * np.pi, 120)
-
-    def rotate(points, angle):
-        c, s = np.cos(angle), np.sin(angle)
-        return np.column_stack((points[:, 0] * c - points[:, 1] * s, points[:, 0] * s + points[:, 1] * c))
-    p0, l0 = rotate(p_base, phase[0]), rotate(l_base, phase[0])
+    
+    p0, l0 = p_base, l_base
 
     # Sizes from actual masses via log scale — equal masses give equal sizes
     m1, m2 = body_masses
@@ -66,7 +110,7 @@ def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_v
     p2_raw = mass_to_size(m2)
     body_halo_trace = len(fig.data)
     fig.add_trace(go.Scatter(x=p0[:, 0], y=p0[:, 1], mode='markers',
-        marker={'size': [p1_raw * 1.7, p2_raw * 1.7], 'color': ['rgba(255,209,102,.12)', 'rgba(114,230,222,.14)']},
+        marker={'size': [p1_raw * 1.8, p2_raw * 1.8], 'color': 'rgba(255, 209, 102, .06)'},
         hoverinfo='skip', showlegend=False))
     body_trace = len(fig.data)
     fig.add_trace(go.Scatter(x=p0[:, 0], y=p0[:, 1], mode='markers+text', text=list(primary_names), textposition='bottom center',
@@ -87,7 +131,7 @@ def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_v
         dynamic_traces.append(target_trace)
 
     if trajectory_rotating is not None and len(trajectory_rotating):
-        path0 = rotate(trajectory_rotating[:1], phase[0])
+        path0 = trajectory_rotating[:1]
         path_trace = len(fig.data)
         fig.add_trace(go.Scatter(x=path0[:, 0], y=path0[:, 1], mode='lines', line={'color': '#95f1ec', 'width': 2.5}, hoverinfo='skip', showlegend=False))
         probe_halo_trace = len(fig.data)
@@ -98,51 +142,19 @@ def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_v
         frame_indices = np.unique(np.linspace(0, len(trajectory_rotating)-1, min(140, len(trajectory_rotating))).astype(int))
         frames = []
         for i in frame_indices:
-            bodies, lags = rotate(p_base, phase[i]), rotate(l_base, phase[i])
-            history = np.array([rotate(trajectory_rotating[j:j+1], phase[j])[0] for j in range(max(0, i-42), i+1)])
+            bodies, lags = p_base, l_base
+            history = trajectory_rotating[max(0, i-42):i+1]
             data = [go.Scatter(x=bodies[:,0], y=bodies[:,1]), go.Scatter(x=bodies[:,0], y=bodies[:,1]), go.Scatter(x=lags[:,0], y=lags[:,1])]
             if target_index is not None: data.append(go.Scatter(x=[lags[target_index,0]], y=[lags[target_index,1]]))
             data += [go.Scatter(x=history[:,0], y=history[:,1]), go.Scatter(x=[history[-1,0]], y=[history[-1,1]]), go.Scatter(x=[history[-1,0]], y=[history[-1,1]])]
             frames.append(go.Frame(name=str(i), data=data, traces=dynamic_traces))
-        fig.frames = frames
-    else:
-        frames = []
-        for idx, angle in enumerate(phase):
-            bodies, lags = rotate(p_base, angle), rotate(l_base, angle)
-            data = [
-                go.Scatter(x=bodies[:, 0], y=bodies[:, 1]),
-                go.Scatter(x=bodies[:, 0], y=bodies[:, 1]),
-                go.Scatter(x=lags[:, 0], y=lags[:, 1]),
-            ]
-            if target_index is not None:
-                data.append(go.Scatter(x=[lags[target_index, 0]], y=[lags[target_index, 1]]))
-            frames.append(go.Frame(name=str(idx), data=data, traces=dynamic_traces))
         fig.frames = frames
 
     fig.update_layout(plot_bgcolor=dark, paper_bgcolor=dark, margin={'l': 12,'r': 12,'t': 12,'b': 12}, showlegend=False,
         hoverlabel={'bgcolor': '#132142', 'bordercolor': '#72e6de', 'font': {'color': '#eff8ff', 'family': 'DM Mono', 'size': 11}},
         xaxis={'range': [-1.5,1.5], 'showgrid': True, 'gridcolor': 'rgba(155,181,240,.055)', 'showticklabels': False, 'zeroline': False, 'scaleanchor': 'y'},
         yaxis={'range': [-1.5,1.5], 'showgrid': True, 'gridcolor': 'rgba(155,181,240,.055)', 'showticklabels': False, 'zeroline': False})
-    if len(fig.frames) > 1:
-        # Auto-play immediately — no manual Play button press needed
-        fig.update_layout(
-            updatemenus=[{
-                'type': 'buttons', 'direction': 'left', 'x': .015, 'y': .02, 'xanchor': 'left', 'yanchor': 'bottom',
-                'bgcolor': 'rgba(13,24,52,.9)', 'bordercolor': 'rgba(114,230,222,.42)', 'borderwidth': 1,
-                'showactive': False, 'font': {'color': '#72e6de', 'family': 'DM Mono', 'size': 11},
-                'buttons': [
-                    {'label': '▶', 'method': 'animate',
-                         'args': [None, {"frame":{"duration":55,"redraw":False},"transition":{"duration":0},"fromcurrent":True,"mode":"immediate"}]},
-                    {'label': 'Ⅱ', 'method': 'animate',
-                         'args': [[None], {"frame":{"duration":0},"mode":"immediate"}]}
-                ]
-            }],
-            # Kick off animation as soon as chart renders
-            sliders=[{
-                'active': 0, 'steps': [{'method': 'animate', 'args': [[str(i)], {'mode': 'immediate', 'frame': {'duration': 0, 'redraw': False}}]} for i in range(len(fig.frames))],
-                'visible': False, 'x': 0, 'y': 0, 'len': 0
-            }]
-        )
+    add_playback_controls(fig)
     return fig
 
 
@@ -206,7 +218,6 @@ def potential_terrain_figure(mu, lagrange_points, trajectory_rotating=None,
     return fig
 
 def system_figure(mu, lagrange_points: dict, trajectory_rotating: np.ndarray = None,
-                   show_potential: bool = False, jacobi_constant_value: float | None = None,
                    selected_point: str | None = None, primary_names: tuple = ("Primary 1", "Primary 2"),
                    view_mode: str = "Orbital plane", time_values: np.ndarray = None,
                    show_lagrange_points: bool = True,
@@ -222,9 +233,6 @@ def system_figure(mu, lagrange_points: dict, trajectory_rotating: np.ndarray = N
       with a color gradient / fading opacity from start to end, plus a
       bright marker at the final point representing the satellite's current
       position
-    - if show_potential is True: add a contour trace of physics.effective_potential
-      evaluated on a grid over the visible area (use go.Contour with a subdued
-      colorscale, opacity ~0.4, placed BEHIND the other traces)
     - dark background: plot_bgcolor and paper_bgcolor set to a dark navy
       (e.g. '#0a0e1a'), gridlines subdued, equal aspect ratio (fig.update_yaxes
       with scaleanchor='x')
@@ -250,45 +258,6 @@ def system_figure(mu, lagrange_points: dict, trajectory_rotating: np.ndarray = N
         )
     fig.add_shape(type='line', x0=-1.5, y0=0, x1=1.5, y1=0,
                   line={'color': 'rgba(152,174,229,.15)', 'width': 1, 'dash': 'dot'}, layer='below')
-    
-    # Calculate grid for potential and Jacobi constant
-    grid_x = np.linspace(-1.5, 1.5, 100)
-    grid_y = np.linspace(-1.5, 1.5, 100)
-    X, Y = np.meshgrid(grid_x, grid_y)
-    Z_raw = np.zeros_like(X)
-    for i in range(X.shape[0]):
-        for j in range(X.shape[1]):
-            Z_raw[i, j] = physics.effective_potential(X[i, j], Y[i, j], mu)
-
-    # Potential contour
-    if show_potential:
-        # Limit max potential to prevent contours from getting scrunched near singularities
-        Z_clip = np.clip(Z_raw, None, 3.5) 
-
-        fig.add_trace(go.Contour(
-            x=grid_x,
-            y=grid_y,
-            z=Z_clip,
-            colorscale=[[0, '#101d42'], [.45, '#284c7a'], [.72, '#755fb1'], [1, '#92ece0']],
-            opacity=0.33,
-            showscale=False,
-            contours={'start': 1.2, 'end': 3.5, 'size': 0.1},
-            hoverinfo='none',
-            name="Effective Potential"
-        ))
-        
-    if jacobi_constant_value is not None:
-        fig.add_trace(go.Contour(
-            x=grid_x,
-            y=grid_y,
-            z=2.0 * Z_raw - jacobi_constant_value,
-            showscale=False,
-            contours={'start': 0, 'end': 0, 'size': 1, 'coloring': 'lines'},
-            line={'color': 'rgba(255,255,255,0.4)', 'width': 1.5, 'dash': 'dash'},
-            hoverinfo='none',
-            name="Zero-Velocity Curve"
-        ))
-
     
     # Sparse, small, low-opacity starfield that reads as deep space
     np.random.seed(42)
@@ -463,27 +432,13 @@ def system_figure(mu, lagrange_points: dict, trajectory_rotating: np.ndarray = N
         }
     )
 
-    if trajectory_rotating is not None and len(trajectory_rotating) > 1:
-        fig.update_layout(
-            updatemenus=[{
-                'type': 'buttons', 'direction': 'left', 'x': 0.015, 'y': 0.02, 'xanchor': 'left', 'yanchor': 'bottom',
-                'bgcolor': 'rgba(13, 24, 52, .82)', 'bordercolor': 'rgba(114,230,222,.3)', 'borderwidth': 1,
-                'showactive': False, 'font': {'color': '#72e6de', 'family': 'DM Mono', 'size': 11},
-                'pad': {'r': 7, 't': 5, 'b': 5, 'l': 7},
-                'buttons': [
-                    {'label': '▶', 'method': 'animate', 
-                         'args': [None, {"frame": {"duration": 55, "redraw": False}, "transition": {"duration": 0}, "fromcurrent": True, "mode": "immediate"}]},
-                    {'label': 'Ⅱ', 'method': 'animate', 
-                         'args': [[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}]}
-                ]
-            }]
-        )
+    add_playback_controls(fig)
     
     return fig
 
 if __name__ == "__main__":
     test_mu = 0.0121
     l_points = physics.all_lagrange_points(test_mu)
-    fig = system_figure(test_mu, l_points, show_potential=True)
+    fig = system_figure(test_mu, l_points)
     fig.write_html("test_viz.html")
     print("test_viz.html created successfully.")

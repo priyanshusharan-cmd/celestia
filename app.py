@@ -10,14 +10,14 @@ import viz
 st.set_page_config(layout="wide", page_title="Celestia · Orbital Lab", page_icon="✦", initial_sidebar_state="expanded")
 
 @st.dialog("Export Cinematic Video")
-def export_video_dialog(mu, sat_rotating):
+def export_video_dialog(mu, sat_rotating, actual_name1, actual_name2, m1_val, m2_val):
     st.write("Rendering a high-quality cinematic animation. Please wait...")
     if sat_rotating is not None:
         with st.spinner("Manim is rendering the simulation..."):
             video_path = manim_viz.render_trajectory(
                 mu, sat_rotating, "orbital_simulation",
-                st.session_state.body1, st.session_state.body2,
-                st.session_state.m1_custom, st.session_state.m2_custom
+                actual_name1, actual_name2,
+                m1_val, m2_val
             )
             st.session_state.manim_video_path = video_path
         if st.session_state.get("manim_video_path"):
@@ -257,7 +257,7 @@ if 'body1' not in st.session_state:
     st.session_state.m1_custom = 1.0
     st.session_state.m2_custom = 0.0123
     st.session_state.separation = 1.0
-    st.session_state.selected_point = "L4"
+    st.session_state.selected_point = None
     st.session_state.perturb_radial = 0.0
     st.session_state.perturb_tangential = 0.0
     st.session_state.perturb_velocity = 0.0
@@ -321,6 +321,9 @@ with st.sidebar.container(border=True):
     
     if m1_input < m2_input:
         st.info("Note: Secondary body is more massive. Masses have been mathematically swapped for the simulation (Primary is always the heaviest).")
+        actual_name1, actual_name2 = st.session_state.body2, st.session_state.body1
+    else:
+        actual_name1, actual_name2 = st.session_state.body1, st.session_state.body2
 
     separation = st.slider("Separation (AU)", 0.1, 5.0, st.session_state.separation)
     st.session_state.separation = separation
@@ -360,10 +363,13 @@ if mu is not None:
             "Select Lagrange Point", 
             ["L1", "L2", "L3", "L4", "L5"], 
             key="selected_point",
+            index=None,
             horizontal=True
         )
         
-        if selected_point in ["L1", "L2", "L3"]:
+        if selected_point is None:
+            st.error("Please select a target equilibrium point first to start the simulation.")
+        elif selected_point in ["L1", "L2", "L3"]:
             st.html(f'<div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #ff6b6b; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">⚠</span> {selected_point} is an unstable saddle point</div>')
         else:
             if is_stable:
@@ -384,28 +390,33 @@ if mu is not None:
         st.html('<div class="control-divider"></div>')
 
         try:
-            all_points = physics.all_lagrange_points(mu)
-            base_x, base_y = all_points[selected_point]
-            start_x = base_x + perturb_radial
-            start_y = base_y + perturb_tangential
-            m_total = m1_val + m2_val
-            omega = np.sqrt(1.0 * m_total / (separation**3))
-            vx = -omega * start_y
-            vy = omega * start_x
-            speed = np.sqrt(vx**2 + vy**2)
-            if speed > 1e-9:
-                vx += (vx / speed) * perturb_velocity
-                vy += (vy / speed) * perturb_velocity
-            sim = rebound_sim.build_simulation(mu, m_total, separation)
-            rebound_sim.add_satellite(sim, start_x, start_y, vx, vy)
-            period = 2.0 * np.pi / omega
-            t_end = 10.0 * period
-            data = rebound_sim.run_and_record(sim, t_end, 800)
-            sat_rotating = frames.to_rotating_frame(data['t'], data['sat'], omega)
-            st.session_state.trajectory = sat_rotating
-            st.session_state.trajectory_times = data['t']
+            if selected_point is None:
+                st.session_state.trajectory = None
+                st.session_state.trajectory_times = None
+                st.session_state.is_rendering = False
+            else:
+                all_points = physics.all_lagrange_points(mu)
+                base_x, base_y = all_points[selected_point]
+                start_x = base_x + perturb_radial
+                start_y = base_y + perturb_tangential
+                m_total = m1_val + m2_val
+                omega = np.sqrt(1.0 * m_total / (separation**3))
+                vx = -omega * start_y
+                vy = omega * start_x
+                speed = np.sqrt(vx**2 + vy**2)
+                if speed > 1e-9:
+                    vx += (vx / speed) * perturb_velocity
+                    vy += (vy / speed) * perturb_velocity
+                sim = rebound_sim.build_simulation(mu, m_total, separation)
+                rebound_sim.add_satellite(sim, start_x, start_y, vx, vy)
+                period = 2.0 * np.pi / omega
+                t_end = 10.0 * period
+                data = rebound_sim.run_and_record(sim, t_end, 800)
+                sat_rotating = frames.to_rotating_frame(data['t'], data['sat'], omega)
+                st.session_state.trajectory = sat_rotating
+                st.session_state.trajectory_times = data['t']
 
-        except Exception:
+        except Exception as e:
             st.session_state.trajectory = None
             st.session_state.trajectory_times = None
             st.session_state.is_rendering = False
@@ -428,8 +439,6 @@ if mu is not None:
         view_mode_simple = st.radio("Map mode", ["Cinematic", "2D Map", "3D Terrain"], horizontal=True, label_visibility="collapsed")
         viz_view_mode_map = {"Cinematic": "Cinematic orbit", "2D Map": "Orbital plane", "3D Terrain": "3D potential terrain"}
         view_mode = viz_view_mode_map[view_mode_simple]
-        show_zvc = st.toggle("Zero-velocity envelope", value=False, help="Shows the energy boundary the satellite cannot cross at its current Jacobi constant.")
-        show_pot = st.toggle("Effective potential field", value=False, help="Shows the effective gravitational potential in the rotating frame.")
 
     # Main Area Plot
     all_points = physics.all_lagrange_points(mu)
@@ -443,7 +452,7 @@ if mu is not None:
         """)
     with col_btn:
         if st.button("Export Video", use_container_width=True):
-            export_video_dialog(mu, st.session_state.trajectory)
+            export_video_dialog(mu, st.session_state.trajectory, actual_name1, actual_name2, m1_val, m2_val)
     jacobi_val = None
     if st.session_state.trajectory is not None:
         start_x = st.session_state.trajectory[0, 0]
@@ -451,23 +460,24 @@ if mu is not None:
         jacobi_val = physics.jacobi_constant(mu, start_x, start_y, st.session_state.perturb_velocity, 0.0)
         
         # Stability Badge above the plot
-        base_pt = all_points[selected_point]
-        stab_info = physics.stability(mu, base_pt)
-        stab_class = stab_info['classification']
-        
-        if stab_class == 'stable':
-            badge_html = f'<div class="stability-badge badge-stable">● {selected_point} · STABLE REGION</div>'
-        else:
-            badge_html = f'<div class="stability-badge badge-unstable">● {selected_point} · UNSTABLE SADDLE</div>'
+        if selected_point is not None:
+            base_pt = all_points[selected_point]
+            stab_info = physics.stability(mu, base_pt)
+            stab_class = stab_info['classification']
             
-        st.markdown(badge_html, unsafe_allow_html=True)
+            if stab_class == 'stable':
+                badge_html = f'<div class="stability-badge badge-stable">● {selected_point} · STABLE REGION</div>'
+            else:
+                badge_html = f'<div class="stability-badge badge-unstable">● {selected_point} · UNSTABLE SADDLE</div>'
+                
+            st.markdown(badge_html, unsafe_allow_html=True)
 
     st.html(f"""
     <div class="field-cue">
       <div class="field-cue__copy">Click on the orbital map to place custom bodies and calculate separation. Adjust parameters and click Render for a cinematic video.</div>
       <div class="field-cue__legend">
-        <div><span class="legend-dot" style="background:#ffd166;"></span>{st.session_state.body1}</div>
-        <div><span class="legend-dot" style="background:#5eead4;"></span>{st.session_state.body2}</div>
+        <div><span class="legend-dot" style="background:#ffd166;"></span>{actual_name1}</div>
+        <div><span class="legend-dot" style="background:#5eead4;"></span>{actual_name2}</div>
         <div><span class="legend-diamond">◆</span> Lagrange Points</div>
         <div><span class="legend-dot" style="background:#ecfbff; border:1px solid #72e6de; width:9px; height:9px; vertical-align:-.05rem;"></span> Satellite</div>
       </div>
@@ -477,10 +487,8 @@ if mu is not None:
     fig = viz.system_figure(
         mu, all_points,
         trajectory_rotating=st.session_state.trajectory,
-        show_potential=show_pot,
-        jacobi_constant_value=jacobi_val if show_zvc else None,
         selected_point=st.session_state.selected_point,
-        primary_names=(st.session_state.body1, st.session_state.body2),
+        primary_names=(actual_name1, actual_name2),
         view_mode=view_mode,
         time_values=st.session_state.trajectory_times,
         body_masses=(m1_val, m2_val)
