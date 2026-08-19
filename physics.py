@@ -1,5 +1,5 @@
-import numpy as np
-from scipy.optimize import brentq, newton
+import numpy as np  # type: ignore
+from scipy.optimize import brentq, newton  # type: ignore
 
 
 def mass_ratio(m1: float, m2: float) -> float:

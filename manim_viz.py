@@ -1,5 +1,5 @@
-import numpy as np
-from manim import *
+import numpy as np  # type: ignore
+from manim import *  # type: ignore
 
 
 class OrbitalScene(Scene):

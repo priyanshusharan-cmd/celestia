@@ -1,6 +1,6 @@
-# pylint: disable=missing-docstring, redefined-outer-name, invalid-name, line-too-long, too-many-arguments, too-many-positional-arguments, broad-exception-caught
-import numpy as np
-import streamlit as st
+# pylint: disable=missing-docstring, redefined-outer-name, invalid-name, line-too-long, too-many-arguments, too-many-positional-arguments, broad-exception-caught, import-error
+import numpy as np  # type: ignore
+import streamlit as st  # type: ignore
 
 import frames
 import manim_viz

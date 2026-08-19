@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np  # type: ignore
 
 
 def to_rotating_frame(t: np.ndarray, xy: np.ndarray, omega: float) -> np.ndarray:

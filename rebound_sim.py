@@ -1,6 +1,6 @@
 # pylint: disable=missing-docstring, too-many-locals
-import numpy as np
-import rebound
+import numpy as np  # type: ignore
+import rebound  # type: ignore
 
 import physics
 

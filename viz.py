@@ -1,5 +1,5 @@
-import numpy as np
-import plotly.graph_objects as go
+import numpy as np  # type: ignore
+import plotly.graph_objects as go  # type: ignore
 
 import physics
 
