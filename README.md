@@ -7,6 +7,8 @@
 
 ## 🎥 Demo Video
 > **[Watch the Demo Video Here](./Demo.mov)**
+> 
+> 🌟 **[Watch the Loom Walkthrough Video Here](https://www.loom.com/share/03f1dd0426674b44b99479f8a24b7577)** 🌟
 
 ## 🌌 Overview
 **Celestia** is an interactive, scientifically rigorous orbital dynamics laboratory. It allows users to simulate the Circular Restricted Three-Body Problem (CR3BP), seamlessly identifying and visualizing the five Lagrange points (L1–L5) for any two massive bodies in the Solar System or beyond.
