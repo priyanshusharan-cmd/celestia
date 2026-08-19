@@ -116,23 +116,23 @@ def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_v
     m1, m2 = body_masses
     p1_raw = mass_to_size(m1)
     p2_raw = mass_to_size(m2)
-    body_halo_trace = len(fig.data)
+    body_halo_trace = len(getattr(fig, "data", ()))
     fig.add_trace(go.Scatter(x=p0[:, 0], y=p0[:, 1], mode='markers',
         marker={'size': [p1_raw * 1.8, p2_raw * 1.8], 'color': 'rgba(255, 209, 102, .06)'},
         hoverinfo='skip', showlegend=False))
-    body_trace = len(fig.data)
+    body_trace = len(getattr(fig, "data", ()))
     fig.add_trace(go.Scatter(x=p0[:, 0], y=p0[:, 1], mode='markers+text', text=list(primary_names), textposition='bottom center',
         marker={'size': [p1_raw, p2_raw], 'color': ['#ffd166', '#72e6de'],
                     'line': {'color': 'rgba(240,248,255,.7)', 'width': 1.5}},
         textfont={'color': '#eaf1ff', 'family': 'DM Mono', 'size': 10},
         hovertemplate='%{text}<extra></extra>', showlegend=False))
-    lag_trace = len(fig.data)
+    lag_trace = len(getattr(fig, "data", ()))
     fig.add_trace(go.Scatter(x=l0[:, 0], y=l0[:, 1], mode='markers+text', text=l_names, customdata=l_names, textposition='top center',
         marker={'symbol': 'diamond', 'size': 10, 'color': '#aa95ff', 'line': {'color': '#eeeaff', 'width': 1}}, textfont={'color': '#f0edff', 'family': 'DM Mono', 'size': 10}, hovertemplate='%{text} equilibrium point<extra></extra>', showlegend=False))
     target_index = l_names.index(selected_point) if selected_point in l_names else None
     target_trace = None
     if target_index is not None:
-        target_trace = len(fig.data)
+        target_trace = len(getattr(fig, "data", ()))
         fig.add_trace(go.Scatter(x=[l0[target_index, 0]], y=[l0[target_index, 1]], mode='markers', hoverinfo='skip', showlegend=False, marker={'symbol': 'circle-open', 'size': 27, 'color': '#72e6de', 'line': {'width': 1.5}}))
     dynamic_traces = [body_halo_trace, body_trace, lag_trace]
     if target_trace is not None:
@@ -140,11 +140,11 @@ def cinematic_orbit_figure(mu, lagrange_points, trajectory_rotating=None, time_v
 
     if trajectory_rotating is not None and len(trajectory_rotating):
         path0 = rotate(trajectory_rotating[:1], phase[0])
-        path_trace = len(fig.data)
+        path_trace = len(getattr(fig, "data", ()))
         fig.add_trace(go.Scatter(x=path0[:, 0], y=path0[:, 1], mode='lines', line={'color': '#95f1ec', 'width': 2.5}, hoverinfo='skip', showlegend=False))
-        probe_halo_trace = len(fig.data)
+        probe_halo_trace = len(getattr(fig, "data", ()))
         fig.add_trace(go.Scatter(x=path0[:, 0], y=path0[:, 1], mode='markers', marker={'size': 20, 'color': 'rgba(114,230,222,.18)'}, hoverinfo='skip', showlegend=False))
-        probe_trace = len(fig.data)
+        probe_trace = len(getattr(fig, "data", ()))
         fig.add_trace(go.Scatter(x=path0[:, 0], y=path0[:, 1], mode='markers', marker={'size': 7, 'color': '#f5ffff', 'line': {'color': '#72e6de', 'width': 2}}, hovertemplate='Live probe<extra></extra>', showlegend=False))
         dynamic_traces += [path_trace, probe_halo_trace, probe_trace]
         frame_indices = np.unique(np.linspace(0, len(trajectory_rotating)-1, min(140, len(trajectory_rotating))).astype(int))
@@ -221,7 +221,7 @@ def potential_terrain_figure(mu, lagrange_points, trajectory_rotating=None,
                                    mode='markers', marker={'size': 7, 'color': '#f4ffff', 'line': {'color': '#72e6de', 'width': 2}},
                                    hovertemplate='Live probe<extra></extra>', showlegend=False))
         frame_indices = np.unique(np.linspace(0, len(trajectory_rotating) - 1, min(120, len(trajectory_rotating))).astype(int))
-        fig.frames = [go.Frame(name=str(i), data=[go.Scatter3d(x=[trajectory_rotating[i, 0]], y=[trajectory_rotating[i, 1]], z=[path_z[i]])], traces=[len(fig.data) - 1]) for i in frame_indices]
+        fig.frames = [go.Frame(name=str(i), data=[go.Scatter3d(x=[trajectory_rotating[i, 0]], y=[trajectory_rotating[i, 1]], z=[path_z[i]])], traces=[len(getattr(fig, "data", ())) - 1]) for i in frame_indices]
     fig.update_layout(
         paper_bgcolor='#080d1e', margin={'l': 0, 'r': 0, 't': 0, 'b': 0}, showlegend=False,
         scene={
@@ -236,9 +236,9 @@ def potential_terrain_figure(mu, lagrange_points, trajectory_rotating=None,
         add_playback_controls(fig)
     return fig
 
-def system_figure(mu, lagrange_points: dict, trajectory_rotating: np.ndarray = None,
+def system_figure(mu, lagrange_points: dict, trajectory_rotating: np.ndarray | None = None,
                    selected_point: str | None = None, primary_names: tuple = ("Primary 1", "Primary 2"),
-                   view_mode: str = "Orbital plane", time_values: np.ndarray = None,
+                   view_mode: str = "Orbital plane", time_values: np.ndarray | None = None,
                    show_lagrange_points: bool = True,
                    body_masses: tuple = (1.0, 0.0123)) -> go.Figure:
     """
@@ -425,7 +425,7 @@ def system_figure(mu, lagrange_points: dict, trajectory_rotating: np.ndarray = N
                     go.Scatter(x=[trajectory_rotating[i, 0]], y=[trajectory_rotating[i, 1]]),
                     go.Scatter(x=[trajectory_rotating[i, 0]], y=[trajectory_rotating[i, 1]])
                 ],
-                traces=[len(fig.data) - 3, len(fig.data) - 2, len(fig.data) - 1]
+                traces=[len(getattr(fig, "data", ())) - 3, len(getattr(fig, "data", ())) - 2, len(getattr(fig, "data", ())) - 1]
             )
             for i in frame_indices
         ]

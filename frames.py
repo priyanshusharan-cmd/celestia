@@ -13,11 +13,11 @@ def to_rotating_frame(t: np.ndarray, xy: np.ndarray, omega: float) -> np.ndarray
     theta = omega * t
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
-    
+
     x = xy[:, 0]
     y = xy[:, 1]
-    
+
     x_rot = x * cos_theta + y * sin_theta
     y_rot = -x * sin_theta + y * cos_theta
-    
+
     return np.column_stack((x_rot, y_rot))

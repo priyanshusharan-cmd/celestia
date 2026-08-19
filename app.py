@@ -1,3 +1,4 @@
+# pylint: disable=missing-docstring, redefined-outer-name, invalid-name, line-too-long, too-many-arguments, too-many-positional-arguments, broad-exception-caught
 import numpy as np
 import streamlit as st
 
@@ -7,7 +8,13 @@ import physics
 import rebound_sim
 import viz
 
-st.set_page_config(layout="wide", page_title="Celestia · Orbital Lab", page_icon="✦", initial_sidebar_state="expanded")
+st.set_page_config(
+    layout="wide",
+    page_title="Celestia · Orbital Lab",
+    page_icon="✦",
+    initial_sidebar_state="expanded",
+)
+
 
 @st.dialog("Export Cinematic Video", width="large")
 def export_video_dialog(mu, sat_rotating, actual_name1, actual_name2, m1_val, m2_val):
@@ -15,15 +22,20 @@ def export_video_dialog(mu, sat_rotating, actual_name1, actual_name2, m1_val, m2
     if sat_rotating is not None:
         with st.spinner("Manim is rendering the simulation..."):
             video_path = manim_viz.render_trajectory(
-                mu, sat_rotating, "orbital_simulation",
-                actual_name1, actual_name2,
-                m1_val, m2_val
+                mu,
+                sat_rotating,
+                "orbital_simulation",
+                actual_name1,
+                actual_name2,
+                m1_val,
+                m2_val,
             )
             st.session_state.manim_video_path = video_path
         if st.session_state.get("manim_video_path"):
             st.video(st.session_state.manim_video_path)
     else:
         st.error("No trajectory available to render.")
+
 
 CUSTOM_CSS = """
 <style>
@@ -138,6 +150,36 @@ CUSTOM_CSS = """
     @keyframes loadingBar { 0% { width: 0%; } 50% { width: 70%; } 100% { width: 100%; } }
     @keyframes fadeOut { to { opacity: 0; visibility: hidden; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); } }
 
+    /* Ultra nice cinematic video modal styles */
+    [data-testid="stDialog"] { 
+        width: 85vw !important; 
+        max-width: 1200px !important;
+        margin: auto !important;
+        border-radius: 20px !important; 
+        background: #040812 !important; 
+        border: 1px solid rgba(114,230,222,.3) !important; 
+        box-shadow: 0 20px 80px rgba(0,0,0,0.8) !important;
+    }
+    [data-testid="stDialog"] > div {
+        background: transparent !important;
+    }
+    [data-testid="stDialog"] [data-testid="stVideo"] {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+    }
+    [data-testid="stDialog"] video { 
+        width: 100% !important; 
+        max-width: 1280px !important;
+        max-height: 75vh !important;
+        border-radius: 12px !important; 
+        margin: 0 auto !important; 
+        display: block !important; 
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6) !important; 
+    }
+
     .stApp {
         color: var(--ink);
         font-family: 'Manrope', sans-serif;
@@ -247,11 +289,11 @@ SOLAR_SYSTEM = {
     "Uranus": 14.54,
     "Neptune": 17.15,
     "Pluto": 0.0022,
-    "Custom": None
+    "Custom": None,
 }
 
 # Initialize session state
-if 'body1' not in st.session_state:
+if "body1" not in st.session_state:
     st.session_state.body1 = "Earth"
     st.session_state.body2 = "Moon"
     st.session_state.m1_custom = 1.0
@@ -290,9 +332,16 @@ st.sidebar.html("""
 with st.sidebar.container(border=True):
     col1, col2 = st.columns([5, 1], vertical_alignment="center")
     with col1:
-        st.html('<div class="control-card__title" style="font-size: 1.3rem; margin-bottom: 0.5rem; font-weight: 700; color: #fff;">System parameters</div>')
+        st.html(
+            '<div class="control-card__title" style="font-size: 1.3rem; margin-bottom: 0.5rem; font-weight: 700; color: #fff;">System parameters</div>'
+        )
     with col2:
-        if st.button("↺", key="reset_sys", use_container_width=True, help="Reset system to Earth–Moon"):
+        if st.button(
+            "↺",
+            key="reset_sys",
+            use_container_width=True,
+            help="Reset system to Earth–Moon",
+        ):
             st.session_state.body1 = "Earth"
             st.session_state.body2 = "Moon"
             st.session_state.m1_custom = 1.0
@@ -303,38 +352,50 @@ with st.sidebar.container(border=True):
 
     body1 = st.selectbox("Primary Body", list(SOLAR_SYSTEM.keys()), key="body1")
     if body1 == "Custom":
-        m1_input = st.number_input("Mass 1 (Earth Masses)", min_value=1e-6, format="%.4f", key="m1_custom")
+        m1_input = st.number_input(
+            "Mass 1 (Earth Masses)", min_value=1e-6, format="%.4f", key="m1_custom"
+        )
     else:
         m1_input = SOLAR_SYSTEM[body1]
-        st.html(f'<div class="system-summary"><strong>M₁</strong><span>{m1_input:,.4g} Earth masses</span></div>')
+        st.html(
+            f'<div class="system-summary"><strong>M₁</strong><span>{m1_input:,.4g} Earth masses</span></div>'
+        )
 
     body2 = st.selectbox("Secondary Body", list(SOLAR_SYSTEM.keys()), key="body2")
     if body2 == "Custom":
-        m2_input = st.number_input("Mass 2 (Earth Masses)", min_value=1e-6, format="%.6f", key="m2_custom")
+        m2_input = st.number_input(
+            "Mass 2 (Earth Masses)", min_value=1e-6, format="%.6f", key="m2_custom"
+        )
     else:
         m2_input = SOLAR_SYSTEM[body2]
-        st.html(f'<div class="system-summary"><strong>M₂</strong><span>{m2_input:,.4g} Earth masses</span></div>')
+        st.html(
+            f'<div class="system-summary"><strong>M₂</strong><span>{m2_input:,.4g} Earth masses</span></div>'
+        )
 
     # Enforce m1 >= m2 mathematically to avoid CR3BP solver issues where mu > 0.5
     m1_val = max(m1_input, m2_input)
     m2_val = min(m1_input, m2_input)
-    
+
     if m1_input < m2_input:
-        st.info("Note: Secondary body is more massive. Masses have been mathematically swapped for the simulation (Primary is always the heaviest).")
+        st.info(
+            "Note: Secondary body is more massive. Masses have been mathematically swapped for the simulation (Primary is always the heaviest)."
+        )
         actual_name1, actual_name2 = st.session_state.body2, st.session_state.body1
     else:
         actual_name1, actual_name2 = st.session_state.body1, st.session_state.body2
 
     separation = st.slider("Separation (AU)", 0.1, 5.0, st.session_state.separation)
     st.session_state.separation = separation
-    
-    if st.session_state.map_placement_notice:
-        st.info("Map placement active — custom bodies are selected and their separation comes from the two map clicks.")
 
+    if st.session_state.map_placement_notice:
+        st.info(
+            "Map placement active — custom bodies are selected and their separation comes from the two map clicks."
+        )
 
     # (Reset button moved to header)
 
     # Compute mu
+    is_stable = False
     try:
         mu = physics.mass_ratio(m1_val, m2_val)
         st.metric("Mass ratio μ", f"{mu:.6f}")
@@ -353,37 +414,58 @@ if mu is not None:
             </div>
             """)
         with col2:
-            if st.button("↺", key="reset_probe", use_container_width=True, help="Recenter probe and zero the perturbations"):
+            if st.button(
+                "↺",
+                key="reset_probe",
+                use_container_width=True,
+                help="Recenter probe and zero the perturbations",
+            ):
                 st.session_state.perturb_radial = 0.0
                 st.session_state.perturb_tangential = 0.0
                 st.session_state.perturb_velocity = 0.0
                 st.rerun()
         st.html('<div class="slider-caption">Target equilibrium point</div>')
         selected_point = st.radio(
-            "Select Lagrange Point", 
-            ["L1", "L2", "L3", "L4", "L5"], 
+            "Select Lagrange Point",
+            ["L1", "L2", "L3", "L4", "L5"],
             key="selected_point",
             index=None,
-            horizontal=True
+            horizontal=True,
         )
-        
+
         if selected_point is None:
-            st.error("Please select a target equilibrium point first to start the simulation.")
+            st.error(
+                "Please select a target equilibrium point first to start the simulation."
+            )
         elif selected_point in ["L1", "L2", "L3"]:
-            st.html(f'<div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #ff6b6b; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">⚠</span> {selected_point} is an unstable saddle point</div>')
+            st.html(
+                f'<div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #ff6b6b; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">⚠</span> {selected_point} is an unstable saddle point</div>'
+            )
         else:
             if is_stable:
-                st.html(f'<div style="background: rgba(94, 234, 212, 0.1); border: 1px solid rgba(94, 234, 212, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #5eead4; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">✓</span> {selected_point} region is stable</div>')
+                st.html(
+                    f'<div style="background: rgba(94, 234, 212, 0.1); border: 1px solid rgba(94, 234, 212, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #5eead4; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">✓</span> {selected_point} region is stable</div>'
+                )
             else:
-                st.html(f'<div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #ff6b6b; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">⚠</span> {selected_point} region is unstable</div>')
-        
-        st.html('<div class="control-divider"></div><div class="slider-caption">Position trim</div>')
-        perturb_radial = st.slider("Move in/out", -1.5, 1.5, key="perturb_radial", step=0.001)
-        
-        perturb_tangential = st.slider("Move sideways", -1.5, 1.5, key="perturb_tangential", step=0.001)
-        
+                st.html(
+                    f'<div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #ff6b6b; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">⚠</span> {selected_point} region is unstable</div>'
+                )
+
+        st.html(
+            '<div class="control-divider"></div><div class="slider-caption">Position trim</div>'
+        )
+        perturb_radial = st.slider(
+            "Move in/out", -1.5, 1.5, key="perturb_radial", step=0.001
+        )
+
+        perturb_tangential = st.slider(
+            "Move sideways", -1.5, 1.5, key="perturb_tangential", step=0.001
+        )
+
         st.html('<div class="slider-caption">Velocity trim</div>')
-        perturb_velocity = st.slider("Nudge move", -1.0, 1.0, key="perturb_velocity", step=0.001)
+        perturb_velocity = st.slider(
+            "Nudge move", -1.0, 1.0, key="perturb_velocity", step=0.001
+        )
 
         # (Reset button moved to header)
 
@@ -412,11 +494,11 @@ if mu is not None:
                 period = 2.0 * np.pi / omega
                 t_end = 10.0 * period
                 data = rebound_sim.run_and_record(sim, t_end, 800)
-                sat_rotating = frames.to_rotating_frame(data['t'], data['sat'], omega)
+                sat_rotating = frames.to_rotating_frame(data["t"], data["sat"], omega)
                 st.session_state.trajectory = sat_rotating
-                st.session_state.trajectory_times = data['t']
+                st.session_state.trajectory_times = data["t"]
 
-        except Exception as e:
+        except Exception:  # noqa: BLE001
             st.session_state.trajectory = None
             st.session_state.trajectory_times = None
             st.session_state.is_rendering = False
@@ -436,13 +518,22 @@ if mu is not None:
             """,
             unsafe_allow_html=True,
         )
-        view_mode_simple = st.radio("Map mode", ["Cinematic", "2D Map", "3D Terrain"], horizontal=True, label_visibility="collapsed")
-        viz_view_mode_map = {"Cinematic": "Cinematic orbit", "2D Map": "Orbital plane", "3D Terrain": "3D potential terrain"}
+        view_mode_simple = st.radio(
+            "Map mode",
+            ["Cinematic", "2D Map", "3D Terrain"],
+            horizontal=True,
+            label_visibility="collapsed",
+        )
+        viz_view_mode_map = {
+            "Cinematic": "Cinematic orbit",
+            "2D Map": "Orbital plane",
+            "3D Terrain": "3D potential terrain",
+        }
         view_mode = viz_view_mode_map[view_mode_simple]
 
     # Main Area Plot
     all_points = physics.all_lagrange_points(mu)
-    
+
     col_head, col_btn = st.columns([5, 1], vertical_alignment="bottom")
     with col_head:
         st.html("""
@@ -452,24 +543,33 @@ if mu is not None:
         """)
     with col_btn:
         if st.button("Export Video", use_container_width=True):
-            export_video_dialog(mu, st.session_state.trajectory, actual_name1, actual_name2, m1_val, m2_val)
+            export_video_dialog(
+                mu,
+                st.session_state.trajectory,
+                actual_name1,
+                actual_name2,
+                m1_val,
+                m2_val,
+            )
     jacobi_val = None
     if st.session_state.trajectory is not None:
         start_x = st.session_state.trajectory[0, 0]
         start_y = st.session_state.trajectory[0, 1]
-        jacobi_val = physics.jacobi_constant(mu, start_x, start_y, st.session_state.perturb_velocity, 0.0)
-        
+        jacobi_val = physics.jacobi_constant(
+            mu, start_x, start_y, st.session_state.perturb_velocity, 0.0
+        )
+
         # Stability Badge above the plot
         if selected_point is not None:
             base_pt = all_points[selected_point]
             stab_info = physics.stability(mu, base_pt)
-            stab_class = stab_info['classification']
-            
-            if stab_class == 'stable':
+            stab_class = stab_info["classification"]
+
+            if stab_class == "stable":
                 badge_html = f'<div class="stability-badge badge-stable">● {selected_point} · STABLE REGION</div>'
             else:
                 badge_html = f'<div class="stability-badge badge-unstable">● {selected_point} · UNSTABLE SADDLE</div>'
-                
+
             st.markdown(badge_html, unsafe_allow_html=True)
 
     st.html(f"""
@@ -485,29 +585,35 @@ if mu is not None:
     """)
 
     fig = viz.system_figure(
-        mu, all_points,
+        mu,
+        all_points,
         trajectory_rotating=st.session_state.trajectory,
         selected_point=st.session_state.selected_point,
         primary_names=(actual_name1, actual_name2),
         view_mode=view_mode,
         time_values=st.session_state.trajectory_times,
-        body_masses=(m1_val, m2_val)
+        body_masses=(m1_val, m2_val),
     )
 
-    event = st.plotly_chart(fig, key="orbital_map", on_select="rerun", selection_mode="points")
-    if event and event.selection and event.selection.points:
-        pt = event.selection.points[0]
+    event = st.plotly_chart(
+        fig, key="orbital_map", on_select="rerun", selection_mode="points"
+    )
+    if event and event["selection"] and event["selection"]["points"]:
+        pt = event["selection"]["points"][0]
         if "customdata" in pt and pt["customdata"][0] == "map":
             cx, cy = pt["customdata"][1], pt["customdata"][2]
             st.session_state.last_map_click = (cx, cy)
-            
-            if st.session_state.body1 == "Custom" and st.session_state.body2 == "Custom":
+
+            if (
+                st.session_state.body1 == "Custom"
+                and st.session_state.body2 == "Custom"
+            ):
                 st.session_state.map_body_positions.append((cx, cy))
                 if len(st.session_state.map_body_positions) > 2:
                     st.session_state.map_body_positions = [(cx, cy)]
                 if len(st.session_state.map_body_positions) == 2:
                     p1, p2 = st.session_state.map_body_positions
-                    sep = np.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
+                    sep = np.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
                     st.session_state.separation = max(0.1, float(sep))
                     st.session_state.map_placement_notice = True
                 st.rerun()
@@ -516,9 +622,11 @@ if mu is not None:
         traj = st.session_state.trajectory
         # max deviation from the FIRST point of the trajectory
         start_pt = traj[0]
-        devs = np.sqrt((traj[:, 0] - start_pt[0])**2 + (traj[:, 1] - start_pt[1])**2)
+        devs = np.sqrt(
+            (traj[:, 0] - start_pt[0]) ** 2 + (traj[:, 1] - start_pt[1]) ** 2
+        )
         max_dev = np.max(devs)
-        
+
         st.html("""
         <div class="section-head">
           <div><div class="eyebrow">Mission data</div><div class="section-head__title">Telemetry readout</div></div>
@@ -530,7 +638,7 @@ if mu is not None:
             r_col1.metric("Max Deviation", f"{max_dev:.6f} AU")
             r_col2.metric("Jacobi Constant", f"{jacobi_val:.6f}")
             r_col3.metric("Mass Ratio (μ)", f"{mu:.6f}")
-            
+
             m_total = m1_val + m2_val
             omega = np.sqrt(1.0 * m_total / (separation**3))
             period = 2.0 * np.pi / omega
