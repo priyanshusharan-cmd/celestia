@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import brentq, newton
 
+
 def mass_ratio(m1: float, m2: float) -> float:
     """Returns mu = m2 / (m1 + m2). Raises ValueError if m1<=0 or m2<=0."""
     if m1 <= 0 or m2 <= 0:

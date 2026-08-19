@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def to_rotating_frame(t: np.ndarray, xy: np.ndarray, omega: float) -> np.ndarray:
     """
     xy has shape (N,2), inertial-frame positions at times t (shape (N,)).

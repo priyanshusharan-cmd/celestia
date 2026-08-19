@@ -1,11 +1,29 @@
-import streamlit as st
 import numpy as np
+import streamlit as st
+
+import frames
+import manim_viz
 import physics
 import rebound_sim
-import frames
 import viz
 
 st.set_page_config(layout="wide", page_title="Celestia · Orbital Lab", page_icon="✦", initial_sidebar_state="expanded")
+
+@st.dialog("Export Cinematic Video")
+def export_video_dialog(mu, sat_rotating):
+    st.write("Rendering a high-quality cinematic animation. Please wait...")
+    if sat_rotating is not None:
+        with st.spinner("Manim is rendering the simulation..."):
+            video_path = manim_viz.render_trajectory(
+                mu, sat_rotating, "orbital_simulation",
+                st.session_state.body1, st.session_state.body2,
+                st.session_state.m1_custom, st.session_state.m2_custom
+            )
+            st.session_state.manim_video_path = video_path
+        if st.session_state.get("manim_video_path"):
+            st.video(st.session_state.manim_video_path)
+    else:
+        st.error("No trajectory available to render.")
 
 CUSTOM_CSS = """
 <style>
@@ -15,48 +33,122 @@ CUSTOM_CSS = """
     #splash-screen {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: radial-gradient(circle at center, #182856 0%, #070b18 72%);
+        background: radial-gradient(circle at center, #0e172c 0%, #040812 100%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         z-index: 999999;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        animation: fadeOut 1.5s ease-in-out 1.5s forwards;
+        animation: fadeOut 0.8s ease-in-out 1.2s forwards;
         pointer-events: none;
     }
+    .loader-container {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        margin-bottom: 2.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .loader-orbit {
+        position: absolute;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        box-sizing: border-box;
+    }
+    .loader-orbit-1 {
+        width: 100%;
+        height: 100%;
+        border-top-color: rgba(114, 230, 222, 0.9);
+        border-right-color: rgba(114, 230, 222, 0.3);
+        border-bottom-color: rgba(114, 230, 222, 0.1);
+        animation: spin 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    }
+    .loader-orbit-2 {
+        width: 75%;
+        height: 75%;
+        border-top-color: rgba(158, 140, 255, 0.9);
+        border-left-color: rgba(158, 140, 255, 0.3);
+        border-bottom-color: rgba(158, 140, 255, 0.1);
+        animation: spin-reverse 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    }
+    .loader-orbit-3 {
+        width: 50%;
+        height: 50%;
+        border-top-color: rgba(255, 255, 255, 0.7);
+        border-right-color: rgba(255, 255, 255, 0.2);
+        animation: spin 1s linear infinite;
+    }
+    .loader-core {
+        width: 15%;
+        height: 15%;
+        background: #72e6de;
+        border-radius: 50%;
+        box-shadow: 0 0 15px #72e6de, 0 0 35px #72e6de, 0 0 60px rgba(158, 140, 255, 0.6);
+        animation: core-pulse 1.2s ease-in-out infinite alternate;
+    }
     #splash-screen h1 {
-        color: #5eead4;
+        color: #ffffff;
         font-family: 'Manrope', sans-serif;
-        font-size: clamp(3rem, 9vw, 5.5rem);
-        letter-spacing: 0.2em;
-        text-shadow: 0 0 30px rgba(94, 234, 212, 0.6);
+        font-size: clamp(2.8rem, 8vw, 5rem);
+        letter-spacing: 0.35em;
+        text-shadow: 0 0 40px rgba(114, 230, 222, 0.3);
         margin: 0;
-        animation: pulse 1s infinite alternate;
+        animation: fadeInUp 0.8s ease-out forwards;
+        opacity: 0;
         font-weight: 800;
+        background: linear-gradient(135deg, #ffffff, #9e8cff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     #splash-screen p {
-        color: #a78bfa;
-        font-size: 1.2rem;
-        font-family: 'Courier New', monospace;
-        margin-top: 1rem;
-        letter-spacing: 0.1em;
+        color: #8190af;
+        font-size: 1.1rem;
+        font-family: 'DM Mono', monospace;
+        margin-top: 1.5rem;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
+        opacity: 0;
+        animation: fadeInUp 0.8s ease-out 0.3s forwards;
     }
-    @keyframes fadeOut {
-        to { opacity: 0; visibility: hidden; }
+    .loading-bar-container {
+        width: 250px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        margin-top: 2rem;
+        border-radius: 2px;
+        overflow: hidden;
+        opacity: 0;
+        animation: fadeInUp 0.8s ease-out 0.4s forwards;
     }
-    @keyframes pulse {
-        from { transform: scale(1); opacity: 0.8; }
-        to { transform: scale(1.05); opacity: 1; }
+    .loading-bar {
+        height: 100%;
+        background: #72e6de;
+        width: 0%;
+        box-shadow: 0 0 10px #72e6de;
+        animation: loadingBar 0.8s cubic-bezier(0.65, 0, 0.35, 1) 0.4s forwards;
     }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes spin-reverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
+    @keyframes core-pulse { 0% { transform: scale(0.7); opacity: 0.6; } 100% { transform: scale(1.3); opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes loadingBar { 0% { width: 0%; } 50% { width: 70%; } 100% { width: 100%; } }
+    @keyframes fadeOut { to { opacity: 0; visibility: hidden; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); } }
 
     .stApp {
         color: var(--ink);
         font-family: 'Manrope', sans-serif;
         background: radial-gradient(ellipse 85% 55% at 75% -5%, rgba(82, 72, 180, .20), transparent 70%), radial-gradient(ellipse 55% 40% at 25% 30%, rgba(15, 153, 171, .10), transparent 70%), #070b18;
     }
-    /* Remove Streamlit's default white toolbar; this experience has its own header. */
+    /* Remove Streamlit's default white toolbar elements and header */
     [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
+    
+    /* Hide the sidebar collapse button so mission control is always visible */
+    [data-testid="stSidebarCollapseButton"] { display: none !important; }
+    
     [data-testid="stAppViewContainer"] > .main { padding-top: 0; }
     .stApp:before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.28; background-image:linear-gradient(rgba(144,165,255,.035) 1px, transparent 1px),linear-gradient(90deg, rgba(144,165,255,.035) 1px, transparent 1px); background-size:42px 42px; mask-image:linear-gradient(to bottom, black, transparent 75%); }
     [data-testid="stSidebar"] {
@@ -112,23 +204,34 @@ CUSTOM_CSS = """
     [data-testid="stRadio"] { gap:.25rem; }
     [data-testid="stRadio"] label { border-radius:9px; transition:all .2s ease; }
     [data-testid="stRadio"] label:hover { background:rgba(114,230,222,.08); }
-    .stButton>button { min-height:2.8rem; border-radius:11px; background:rgba(37,51,90,.68); border:1px solid rgba(164,185,255,.25); color:#dce8ff; font-family:'Manrope',sans-serif; font-size:.69rem; font-weight:800; letter-spacing:.055em; text-transform:uppercase; transition:all .2s ease; }
-    .stButton>button[kind="primary"] { background:linear-gradient(135deg, #74e7dd, #8392ff); color:#07101f; border:1px solid transparent; box-shadow:0 10px 25px rgba(96,203,221,.22); }
-    .stButton>button:hover { transform:translateY(-2px); border-color:rgba(114,230,222,.72); box-shadow:0 13px 28px rgba(96,203,221,.25); }
+    .stButton>button, [data-testid="baseButton-secondary"] { min-height:2.8rem; border-radius:11px; background:rgba(37,51,90,.68) !important; border:1px solid rgba(164,185,255,.25) !important; color:#dce8ff !important; font-family:'Manrope',sans-serif; font-size:.69rem; font-weight:800; letter-spacing:.055em; text-transform:uppercase; transition:all .2s ease; }
+    .stButton>button[kind="primary"], [data-testid="baseButton-primary"] { background:linear-gradient(135deg, #74e7dd, #8392ff) !important; color:#07101f !important; border:1px solid transparent !important; box-shadow:0 10px 25px rgba(96,203,221,.22); }
+    .stButton>button:hover, [data-testid="baseButton-secondary"]:hover, [data-testid="baseButton-primary"]:hover { transform:translateY(-2px); border-color:rgba(114,230,222,.72) !important; box-shadow:0 13px 28px rgba(96,203,221,.25); }
+    .playback-panel { display:flex; gap:.6rem; margin-top:.6rem; align-items:center; }
+    .speed-pill { display:inline-flex; align-items:center; justify-content:center; min-width:4.2rem; padding:.45rem .5rem; border-radius:10px; background:rgba(19, 29, 50, .9); border:1px solid rgba(150,173,255,.18); color:#dceaff; font-family:'DM Mono'; font-size:.72rem; font-weight:600; }
     .stability-badge { display:inline-flex; align-items:center; gap:.45rem; padding:.45rem .75rem; border-radius:999px; font-family:'DM Mono'; font-size:.66rem; letter-spacing:.06em; margin:0 0 .2rem; }
     .badge-stable { background:rgba(61,220,155,.1); color:#68e6b2; border:1px solid rgba(61,220,155,.28); }
     .badge-unstable { background:rgba(255,131,142,.10); color:#ff9ba6; border:1px solid rgba(255,131,142,.28); }
     [data-testid="stPlotlyChart"] { border:1px solid var(--line); border-radius:18px; overflow:hidden; background:#080d1e; box-shadow:0 18px 50px rgba(0,0,0,.18); }
     hr { border-color:var(--line) !important; margin:1.6rem 0 !important; }
     @media (max-width: 800px) { .block-container { padding:1.25rem 1rem 2rem; } .hero { min-height:145px; padding:1.5rem; } .hero__status { position:relative; top:auto; right:auto; margin-top:1rem; } }
+    [data-testid="stSidebarContent"] { padding-top: 1.5rem !important; }
+    [data-testid="stSidebarHeader"] { padding-top: 0 !important; display: none !important; }
 </style>
 """
 st.html(CUSTOM_CSS)
 
 st.html("""
 <div id="splash-screen">
+    <div class="loader-container">
+        <div class="loader-orbit loader-orbit-1"></div>
+        <div class="loader-orbit loader-orbit-2"></div>
+        <div class="loader-orbit loader-orbit-3"></div>
+        <div class="loader-core"></div>
+    </div>
     <h1>CELESTIA</h1>
     <p>Orbital Dynamics Laboratory</p>
+    <div class="loading-bar-container"><div class="loading-bar"></div></div>
 </div>
 """)
 
@@ -160,6 +263,11 @@ if 'body1' not in st.session_state:
     st.session_state.perturb_velocity = 0.0
     st.session_state.trajectory = None
     st.session_state.trajectory_times = None
+    st.session_state.map_body_positions = []
+    st.session_state.map_placement_notice = False
+    st.session_state.last_map_click = None
+    st.session_state.manim_video_path = None
+    st.session_state.is_rendering = False
 
 st.html("""
 <section class="hero">
@@ -180,23 +288,29 @@ st.sidebar.html("""
 <div class="sidebar-rule"></div>
 """)
 with st.sidebar.container(border=True):
-    st.subheader("System parameters")
+    col1, col2 = st.columns([5, 1], vertical_alignment="center")
+    with col1:
+        st.html('<div class="control-card__title" style="font-size: 1.3rem; margin-bottom: 0.5rem; font-weight: 700; color: #fff;">System parameters</div>')
+    with col2:
+        if st.button("↺", key="reset_sys", use_container_width=True, help="Reset system to Earth–Moon"):
+            st.session_state.body1 = "Earth"
+            st.session_state.body2 = "Moon"
+            st.session_state.m1_custom = 1.0
+            st.session_state.m2_custom = 0.0123
+            st.session_state.separation = 1.0
+            st.rerun()
     st.caption("THE GRAVITATIONAL ENVIRONMENT")
 
-    body1 = st.selectbox("Primary Body", list(SOLAR_SYSTEM.keys()), index=list(SOLAR_SYSTEM.keys()).index(st.session_state.body1))
-    st.session_state.body1 = body1
+    body1 = st.selectbox("Primary Body", list(SOLAR_SYSTEM.keys()), key="body1")
     if body1 == "Custom":
-        m1_input = st.number_input("Mass 1 (Earth Masses)", value=st.session_state.m1_custom, min_value=1e-6, format="%.4f")
-        st.session_state.m1_custom = m1_input
+        m1_input = st.number_input("Mass 1 (Earth Masses)", min_value=1e-6, format="%.4f", key="m1_custom")
     else:
         m1_input = SOLAR_SYSTEM[body1]
         st.html(f'<div class="system-summary"><strong>M₁</strong><span>{m1_input:,.4g} Earth masses</span></div>')
 
-    body2 = st.selectbox("Secondary Body", list(SOLAR_SYSTEM.keys()), index=list(SOLAR_SYSTEM.keys()).index(st.session_state.body2))
-    st.session_state.body2 = body2
+    body2 = st.selectbox("Secondary Body", list(SOLAR_SYSTEM.keys()), key="body2")
     if body2 == "Custom":
-        m2_input = st.number_input("Mass 2 (Earth Masses)", value=st.session_state.m2_custom, min_value=1e-6, format="%.6f")
-        st.session_state.m2_custom = m2_input
+        m2_input = st.number_input("Mass 2 (Earth Masses)", min_value=1e-6, format="%.6f", key="m2_custom")
     else:
         m2_input = SOLAR_SYSTEM[body2]
         st.html(f'<div class="system-summary"><strong>M₂</strong><span>{m2_input:,.4g} Earth masses</span></div>')
@@ -208,91 +322,93 @@ with st.sidebar.container(border=True):
     if m1_input < m2_input:
         st.info("Note: Secondary body is more massive. Masses have been mathematically swapped for the simulation (Primary is always the heaviest).")
 
-    separation = st.slider("Separation (AU)", 0.5, 2.0, st.session_state.separation)
+    separation = st.slider("Separation (AU)", 0.1, 5.0, st.session_state.separation)
     st.session_state.separation = separation
+    
+    if st.session_state.map_placement_notice:
+        st.info("Map placement active — custom bodies are selected and their separation comes from the two map clicks.")
+
+
+    # (Reset button moved to header)
 
     # Compute mu
     try:
         mu = physics.mass_ratio(m1_val, m2_val)
         st.metric("Mass ratio μ", f"{mu:.6f}")
-        if mu < 0.038521:
-            st.success("L4/L5 regions are stable")
-        else:
-            st.warning("L4/L5 regions are unstable")
+        is_stable = mu < 0.038521
     except ValueError as e:
         st.error(str(e))
         mu = None
 
 if mu is not None:
     with st.sidebar.container(border=True):
-        st.html("""
-        <div class="control-card__head">
-          <div><div class="control-card__title">Satellite &amp; perturbation</div><div class="control-card__sub">Set the launch point and adjust its initial state.</div></div>
-          <div class="control-card__tag">GUIDANCE</div>
-        </div>
-        """)
+        col1, col2 = st.columns([5, 1], vertical_alignment="center")
+        with col1:
+            st.html("""
+            <div class="control-card__head">
+              <div><div class="control-card__title">Satellite &amp; perturbation</div><div class="control-card__sub">Set the launch point and adjust its initial state.</div></div>
+            </div>
+            """)
+        with col2:
+            if st.button("↺", key="reset_probe", use_container_width=True, help="Recenter probe and zero the perturbations"):
+                st.session_state.perturb_radial = 0.0
+                st.session_state.perturb_tangential = 0.0
+                st.session_state.perturb_velocity = 0.0
+                st.rerun()
         st.html('<div class="slider-caption">Target equilibrium point</div>')
         selected_point = st.radio(
             "Select Lagrange Point", 
             ["L1", "L2", "L3", "L4", "L5"], 
-            index=["L1", "L2", "L3", "L4", "L5"].index(st.session_state.selected_point),
+            key="selected_point",
             horizontal=True
         )
-        st.session_state.selected_point = selected_point
+        
+        if selected_point in ["L1", "L2", "L3"]:
+            st.html(f'<div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #ff6b6b; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">⚠</span> {selected_point} is an unstable saddle point</div>')
+        else:
+            if is_stable:
+                st.html(f'<div style="background: rgba(94, 234, 212, 0.1); border: 1px solid rgba(94, 234, 212, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #5eead4; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">✓</span> {selected_point} region is stable</div>')
+            else:
+                st.html(f'<div style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.4); padding: 0.75rem 1rem; border-radius: 6px; color: #ff6b6b; font-size: 0.9rem; margin: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">⚠</span> {selected_point} region is unstable</div>')
         
         st.html('<div class="control-divider"></div><div class="slider-caption">Position trim</div>')
-        perturb_radial = st.slider("Radial perturbation · x", -0.05, 0.05, st.session_state.perturb_radial, 0.001)
-        st.session_state.perturb_radial = perturb_radial
+        perturb_radial = st.slider("Move in/out", -1.5, 1.5, key="perturb_radial", step=0.001)
         
-        perturb_tangential = st.slider("Tangential perturbation · y", -0.05, 0.05, st.session_state.perturb_tangential, 0.001)
-        st.session_state.perturb_tangential = perturb_tangential
+        perturb_tangential = st.slider("Move sideways", -1.5, 1.5, key="perturb_tangential", step=0.001)
         
         st.html('<div class="slider-caption">Velocity trim</div>')
-        perturb_velocity = st.slider("Velocity kick", -0.02, 0.02, st.session_state.perturb_velocity, 0.001)
-        st.session_state.perturb_velocity = perturb_velocity
+        perturb_velocity = st.slider("Nudge move", -1.0, 1.0, key="perturb_velocity", step=0.001)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Launch forecast", type="primary", width="stretch"):
-                try:
-                    all_points = physics.all_lagrange_points(mu)
-                    base_x, base_y = all_points[selected_point]
-                    
-                    start_x = base_x + perturb_radial
-                    start_y = base_y + perturb_tangential
-                    
-                    m_total = m1_val + m2_val
-                    omega = np.sqrt(1.0 * m_total / (separation**3))
-                    
-                    vx = -omega * start_y
-                    vy = omega * start_x
-                    
-                    speed = np.sqrt(vx**2 + vy**2)
-                    if speed > 1e-9:
-                        vx += (vx / speed) * perturb_velocity
-                        vy += (vy / speed) * perturb_velocity
-                    
-                    sim = rebound_sim.build_simulation(mu, m_total, separation)
-                    rebound_sim.add_satellite(sim, start_x, start_y, vx, vy)
-                    
-                    period = 2.0 * np.pi / omega
-                    t_end = 3.0 * period
-                    
-                    data = rebound_sim.run_and_record(sim, t_end, 300)
-                    
-                    sat_inertial = data['sat']
-                    t_vals = data['t']
-                    
-                    sat_rotating = frames.to_rotating_frame(t_vals, sat_inertial, omega)
-                    st.session_state.trajectory = sat_rotating
-                    st.session_state.trajectory_times = t_vals
-                except Exception as e:
-                    st.error(f"Simulation error: {str(e)}")
-                
-        with col2:
-            if st.button("Clear path", width="stretch"):
-                st.session_state.trajectory = None
-                st.session_state.trajectory_times = None
+        # (Reset button moved to header)
+
+        st.html('<div class="control-divider"></div>')
+
+        try:
+            all_points = physics.all_lagrange_points(mu)
+            base_x, base_y = all_points[selected_point]
+            start_x = base_x + perturb_radial
+            start_y = base_y + perturb_tangential
+            m_total = m1_val + m2_val
+            omega = np.sqrt(1.0 * m_total / (separation**3))
+            vx = -omega * start_y
+            vy = omega * start_x
+            speed = np.sqrt(vx**2 + vy**2)
+            if speed > 1e-9:
+                vx += (vx / speed) * perturb_velocity
+                vy += (vy / speed) * perturb_velocity
+            sim = rebound_sim.build_simulation(mu, m_total, separation)
+            rebound_sim.add_satellite(sim, start_x, start_y, vx, vy)
+            period = 2.0 * np.pi / omega
+            t_end = 10.0 * period
+            data = rebound_sim.run_and_record(sim, t_end, 800)
+            sat_rotating = frames.to_rotating_frame(data['t'], data['sat'], omega)
+            st.session_state.trajectory = sat_rotating
+            st.session_state.trajectory_times = data['t']
+
+        except Exception:
+            st.session_state.trajectory = None
+            st.session_state.trajectory_times = None
+            st.session_state.is_rendering = False
 
     with st.sidebar.container(border=True):
         st.html("""
@@ -301,30 +417,33 @@ if mu is not None:
           <div class="control-card__tag">ANALYSIS</div>
         </div>
         """)
-        view_mode = st.radio("Map mode", ["Cinematic orbit", "Orbital plane", "3D potential terrain"], horizontal=True, label_visibility="collapsed")
+        st.markdown(
+            """
+            <div class="system-summary">
+              Select a viewing mode for the simulation.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        view_mode_simple = st.radio("Map mode", ["Cinematic", "2D Map", "3D Terrain"], horizontal=True, label_visibility="collapsed")
+        viz_view_mode_map = {"Cinematic": "Cinematic orbit", "2D Map": "Orbital plane", "3D Terrain": "3D potential terrain"}
+        view_mode = viz_view_mode_map[view_mode_simple]
         show_zvc = st.toggle("Zero-velocity envelope", value=False, help="Shows the energy boundary the satellite cannot cross at its current Jacobi constant.")
         show_pot = st.toggle("Effective potential field", value=False, help="Shows the effective gravitational potential in the rotating frame.")
 
     # Main Area Plot
     all_points = physics.all_lagrange_points(mu)
-    mode_detail = "PLAYBACK READY" if st.session_state.trajectory is not None else "AWAITING FORECAST"
-    st.html(f"""
-    <div class="section-head">
-      <div><div class="eyebrow">Rotating reference frame</div><div class="section-head__title">Orbital field map</div></div>
-      <div class="section-head__detail">{mode_detail}</div>
-    </div>
-    """)
-    st.html("""
-    <div class="field-cue">
-      <div class="field-cue__copy">Drag to inspect · Scroll to zoom · launch a forecast to activate the flight playback</div>
-      <div class="field-cue__legend">
-        <span><i class="legend-dot" style="background:#ffd166"></i>PRIMARY</span>
-        <span><i class="legend-diamond">◆</i> LAGRANGE</span>
-        <span><i class="legend-dot" style="background:#72e6de"></i>PROBE</span>
-      </div>
-    </div>
-    """)
     
+    col_head, col_btn = st.columns([5, 1], vertical_alignment="bottom")
+    with col_head:
+        st.html("""
+        <div class="section-head" style="margin-bottom:0;">
+          <div><div class="eyebrow">Rotating reference frame</div><div class="section-head__title">Orbital field map</div></div>
+        </div>
+        """)
+    with col_btn:
+        if st.button("Export Video", use_container_width=True):
+            export_video_dialog(mu, st.session_state.trajectory)
     jacobi_val = None
     if st.session_state.trajectory is not None:
         start_x = st.session_state.trajectory[0, 0]
@@ -343,35 +462,47 @@ if mu is not None:
             
         st.markdown(badge_html, unsafe_allow_html=True)
 
-    # Accept an already-loaded visual module during Streamlit hot reloads. This
-    # fallback keeps the simulator usable even if a previous process still holds
-    # the earlier renderer for one refresh.
-    figure_args = dict(
+    st.html(f"""
+    <div class="field-cue">
+      <div class="field-cue__copy">Click on the orbital map to place custom bodies and calculate separation. Adjust parameters and click Render for a cinematic video.</div>
+      <div class="field-cue__legend">
+        <div><span class="legend-dot" style="background:#ffd166;"></span>{st.session_state.body1}</div>
+        <div><span class="legend-dot" style="background:#5eead4;"></span>{st.session_state.body2}</div>
+        <div><span class="legend-diamond">◆</span> Lagrange Points</div>
+        <div><span class="legend-dot" style="background:#ecfbff; border:1px solid #72e6de; width:9px; height:9px; vertical-align:-.05rem;"></span> Satellite</div>
+      </div>
+    </div>
+    """)
+
+    fig = viz.system_figure(
+        mu, all_points,
         trajectory_rotating=st.session_state.trajectory,
         show_potential=show_pot,
         jacobi_constant_value=jacobi_val if show_zvc else None,
+        selected_point=st.session_state.selected_point,
+        primary_names=(st.session_state.body1, st.session_state.body2),
+        view_mode=view_mode,
+        time_values=st.session_state.trajectory_times,
+        body_masses=(m1_val, m2_val)
     )
-    try:
-        fig = viz.system_figure(
-            mu, all_points, selected_point=selected_point,
-            primary_names=(body1, body2), view_mode=view_mode,
-            time_values=st.session_state.trajectory_times, **figure_args
-        )
-    except TypeError as error:
-        if "unexpected keyword argument" not in str(error):
-            raise
-        fig = viz.system_figure(mu, all_points, **figure_args)
-    map_event = st.plotly_chart(
-        fig, width="stretch", height=640, key="orbital_field_map", on_select="rerun",
-        selection_mode="points", config={"displayModeBar": False}
-    )
-    # Clicking a Lagrange marker on the orbital-plane map retargets the probe.
-    selected_hits = map_event.selection.get("points", [])
-    if selected_hits:
-        map_target = selected_hits[0].get("customdata")
-        if map_target in all_points and map_target != st.session_state.selected_point:
-            st.session_state.selected_point = map_target
-            st.rerun()
+
+    event = st.plotly_chart(fig, key="orbital_map", on_select="rerun", selection_mode="points")
+    if event and event.selection and event.selection.points:
+        pt = event.selection.points[0]
+        if "customdata" in pt and pt["customdata"][0] == "map":
+            cx, cy = pt["customdata"][1], pt["customdata"][2]
+            st.session_state.last_map_click = (cx, cy)
+            
+            if st.session_state.body1 == "Custom" and st.session_state.body2 == "Custom":
+                st.session_state.map_body_positions.append((cx, cy))
+                if len(st.session_state.map_body_positions) > 2:
+                    st.session_state.map_body_positions = [(cx, cy)]
+                if len(st.session_state.map_body_positions) == 2:
+                    p1, p2 = st.session_state.map_body_positions
+                    sep = np.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
+                    st.session_state.separation = max(0.1, float(sep))
+                    st.session_state.map_placement_notice = True
+                st.rerun()
 
     if st.session_state.trajectory is not None:
         traj = st.session_state.trajectory

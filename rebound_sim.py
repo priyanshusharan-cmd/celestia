@@ -1,6 +1,8 @@
-import rebound
 import numpy as np
+import rebound
+
 import physics
+
 
 def build_simulation(mu: float, m_total: float = 1.0, separation: float = 1.0):
     """
@@ -51,6 +53,14 @@ def run_and_record(sim, t_end: float, n_samples: int = 500) -> dict:
         p1_pos[i] = [p1.x, p1.y]
         p2_pos[i] = [p2.x, p2.y]
         sat_pos[i] = [sat.x, sat.y]
+        
+        # Stop simulation if satellite is ejected far outside the map
+        if np.sqrt(sat.x**2 + sat.y**2) > 3.5:
+            times = times[:i+1]
+            p1_pos = p1_pos[:i+1]
+            p2_pos = p2_pos[:i+1]
+            sat_pos = sat_pos[:i+1]
+            break
         
     return {
         't': times,

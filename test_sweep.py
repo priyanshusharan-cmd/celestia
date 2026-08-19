@@ -16,8 +16,8 @@ for mu in mu_vals:
         l2_stab = physics.stability(mu, points['L2'])['classification']
         l3_stab = physics.stability(mu, points['L3'])['classification']
         
-        col_unstable = all([s == 'unstable' for s in (l1_stab, l2_stab, l3_stab)])
+        col_unstable = all(s == 'unstable' for s in (l1_stab, l2_stab, l3_stab))
         
-        print(f"{mu:<10} | {l4_stab:<10} | {l5_stab:<10} | {str(col_unstable):<15}")
+        print(f"{mu:<10} | {l4_stab:<10} | {l5_stab:<10} | {col_unstable!s:<15}")
     except ValueError as e:
-        print(f"{mu:<10} | ERROR: {str(e)}")
+        print(f"{mu:<10} | ERROR: {e!s}")
