@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="./logo.jpg" alt="Celestia Logo" width="400" />
+  <img src="./logo.png" alt="Celestia Logo" width="400" />
 
   <h1>✦ Celestia: Orbital Dynamics Laboratory ✦</h1>
   <p><strong>Cosmic Code Hackathon 2026 Submission</strong></p>
