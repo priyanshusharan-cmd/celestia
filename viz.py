@@ -54,7 +54,7 @@ def add_playback_controls(fig):
                     {'label': '▶/Ⅱ', 'method': 'animate',
                      'args': [None, {"frame": {"duration": 55, "redraw": False}, "transition": {"duration": 0}, "fromcurrent": True, "mode": "immediate"}],
                      'args2': [[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}]},
-                    {'label': '⚙ Timeline', 'method': 'relayout',
+                    {'label': '⚙ Timeline   ', 'method': 'relayout',
                      'args': [{'sliders[0].visible': True}],
                      'args2': [{'sliders[0].visible': False}]}
                 ]
