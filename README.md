@@ -150,9 +150,7 @@ The two primaries orbit their common barycenter.
 
 The system is parameterized by:
 
-$$
-\mu = \frac{m_2}{m_1+m_2}
-$$
+$$ \mu = \frac{m_2}{m_1+m_2} $$
 
 where:
 
@@ -164,13 +162,9 @@ Celestia calculates this dynamically from the selected bodies.
 
 In normalized CR3BP coordinates, the barycenter is placed at the origin and the primaries are positioned at:
 
-$$
-x_1=-\mu
-$$
+$$ x_1=-\mu $$
 
-$$
-x_2=1-\mu
-$$
+$$ x_2=1-\mu $$
 
 This coordinate system is used throughout the Lagrange-point calculations.
 
@@ -203,27 +197,15 @@ $$ L_{4,5} = \left(\frac{1}{2}-\mu, \pm\frac{\sqrt{3}}{2}\right) $$
 
 Celestia also calculates the effective potential in the rotating frame:
 
-$$
-\Omega(x,y)
-=
-\frac{1-\mu}{r_1}
-+
-\frac{\mu}{r_2}
-+
-\frac{x^2+y^2}{2}
-$$
+$$ \Omega(x,y) = \frac{1-\mu}{r_1} + \frac{\mu}{r_2} + \frac{x^2+y^2}{2} $$
 
 where:
 
-$$
-r_1=\sqrt{(x+\mu)^2+y^2}
-$$
+$$ r_1=\sqrt{(x+\mu)^2+y^2} $$
 
 and
 
-$$
-r_2=\sqrt{(x-1+\mu)^2+y^2}
-$$
+$$ r_2=\sqrt{(x-1+\mu)^2+y^2} $$
 
 The effective potential is used to generate the interactive **3D Potential Terrain** visualization.
 
@@ -239,25 +221,13 @@ The selected equilibrium point is locally linearized.
 
 The Hessian of the effective potential is estimated numerically:
 
-$$
-\Omega_{xx},\quad
-\Omega_{yy},\quad
-\Omega_{xy}
-$$
+$$ \Omega_{xx},\quad \Omega_{yy},\quad \Omega_{xy} $$
 
 using central finite differences.
 
 These derivatives are then used to construct the linearized rotating-frame system:
 
-$$
-A=
-\begin{bmatrix}
-0&0&1&0\\
-0&0&0&1\\
-\Omega_{xx}&\Omega_{xy}&0&2\\
-\Omega_{xy}&\Omega_{yy}&-2&0
-\end{bmatrix}
-$$
+$$ A= \begin{bmatrix} 0&0&1&0\\ 0&0&0&1\\ \Omega_{xx}&\Omega_{xy}&0&2\\ \Omega_{xy}&\Omega_{yy}&-2&0 \end{bmatrix} $$
 
 Celestia calculates the eigenvalues of this matrix.
 
@@ -366,19 +336,13 @@ Celestia therefore transforms the numerical trajectory.
 
 For:
 
-$$
-\theta=\omega t
-$$
+$$ \theta=\omega t $$
 
 the rotating-frame coordinates are:
 
-$$
-x_r=x\cos\theta+y\sin\theta
-$$
+$$ x_r=x\cos\theta+y\sin\theta $$
 
-$$
-y_r=-x\sin\theta+y\cos\theta
-$$
+$$ y_r=-x\sin\theta+y\cos\theta $$
 
 This transformation is implemented in `frames.py` using vectorized NumPy operations.
 
@@ -399,9 +363,7 @@ Once a simulation has been generated, Celestia exposes numerical telemetry inclu
 
 The Jacobi constant is calculated as:
 
-$$
-C=2\Omega(x,y)-(v_x^2+v_y^2)
-$$
+$$ C=2\Omega(x,y)-(v_x^2+v_y^2) $$
 
 This provides an additional dynamical quantity alongside the visual trajectory.
 
@@ -534,9 +496,7 @@ Separation
 
 Celestia calculates:
 
-$$
-\mu=\frac{m_2}{m_1+m_2}
-$$
+$$ \mu=\frac{m_2}{m_1+m_2} $$
 
 ---
 
@@ -963,7 +923,5 @@ Built with Python · NumPy · SciPy · REBOUND · Plotly · Streamlit · Manim
 </a>
 
 </div>
-
-
 
 
