@@ -34,11 +34,11 @@
 
 ## 🎥 Demonstration
 
+<br>
 
-
-https://github.com/user-attachments/assets/5e6ecf11-f7f7-44ba-a35e-475ac50cb04f
-
-
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/5e6ecf11-f7f7-44ba-a35e-475ac50cb04f" width="85%" controls autoplay loop muted style="border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);"></video>
+</div>
 
 <br>
 
@@ -658,80 +658,61 @@ Export the simulation as a cinematic Manim animation.
 
 ---
 
-# 🏗️ Architecture
+# 🧑‍💻 Code Structure & Architecture
+
+Celestia's codebase is designed with a strict separation of concerns, ensuring scientific rigor while maintaining an interactive, real-time user interface.
+
+<details open>
+<summary><b><code>app.py</code> — The Application Core</b></summary>
+<blockquote>
+Orchestrates the entire Streamlit application. It manages the UI layout, captures user input for system configuration and perturbations, and wires together the physics engine, numerical simulation, and rendering pipelines. 
+<br><i>Key responsibilities: State management, Telemetry display, Video export triggering.</i>
+</blockquote>
+</details>
+
+<details>
+<summary><b><code>physics.py</code> — CR3BP Mathematics</b></summary>
+<blockquote>
+The analytical heart of Celestia. Implements the <i>Circular Restricted Three-Body Problem</i> equations, dynamically calculating the normalized mass ratio (<code>μ</code>) and the precise coordinates of the five Lagrange points.
+<br><i>Key methods: <code>compute_L1</code>, <code>compute_L2</code>, <code>compute_L3</code>, Eigenvalue stability analysis, Jacobi constant derivation.</i>
+</blockquote>
+</details>
+
+<details>
+<summary><b><code>rebound_sim.py</code> — Numerical Dynamics Engine</b></summary>
+<blockquote>
+Wraps the powerful <b>REBOUND</b> N-body library. Initializes the primary bodies and the test satellite, then performs high-accuracy numerical integration using the <b>IAS15</b> integrator to trace the perturbed trajectory over time.
+</blockquote>
+</details>
+
+<details>
+<summary><b><code>frames.py</code> — Coordinate Transformations</b></summary>
+<blockquote>
+A dedicated module for translating the inertial trajectories calculated by REBOUND into the rotating reference frame of the two primary bodies, making the Lagrange points appear stationary.
+</blockquote>
+</details>
+
+<details>
+<summary><b><code>viz.py</code> & <code>manim_viz.py</code> — The Visualization Layer</b></summary>
+<blockquote>
+<b><code>viz.py</code>:</b> Uses <i>Plotly</i> to render the interactive 2D orbital plane and the rich 3D potential terrain.<br>
+<b><code>manim_viz.py</code>:</b> An advanced rendering pipeline using <i>Manim</i> to export the numerical simulation into a presentation-quality, cinematic MP4 animation.
+</blockquote>
+</details>
+
+<br>
 
 ```text
-Celestia
-│
-├── app.py
-│   └── Streamlit application
-│       ├── UI
-│       ├── system configuration
-│       ├── perturbation controls
-│       ├── simulation orchestration
-│       ├── telemetry
-│       └── video export
-│
-├── physics.py
-│   └── CR3BP mathematics
-│       ├── mass ratio
-│       ├── primary positions
-│       ├── effective potential
-│       ├── L1 solver
-│       ├── L2 solver
-│       ├── L3 solver
-│       ├── L4 / L5
-│       ├── stability analysis
-│       └── Jacobi constant
-│
-├── rebound_sim.py
-│   └── Numerical dynamics
-│       ├── REBOUND simulation
-│       ├── IAS15 integration
-│       ├── primary initialization
-│       ├── satellite insertion
-│       └── trajectory recording
-│
-├── frames.py
-│   └── Reference-frame transformations
-│       └── inertial → rotating
-│
-├── viz.py
-│   └── Plotly visualization
-│       ├── 2D orbital map
-│       ├── 3D potential terrain
-│       ├── cinematic orbit
-│       ├── animation frames
-│       └── playback controls
-│
-├── manim_viz.py
-│   └── Cinematic rendering
-│       └── MP4 generation
-│
-├── requirements.txt
-│   └── Python dependencies
-│
-├── logo.png
-│   └── Celestia branding
-│
-└── README.md
-    └── Project documentation
+celestia/
+├── app.py             # Main Streamlit UI & Orchestration
+├── physics.py         # CR3BP Math, Lagrange solvers, Stability
+├── rebound_sim.py     # REBOUND/IAS15 numerical integration
+├── frames.py          # Inertial → Rotating transformations
+├── viz.py             # Plotly 2D/3D Interactive graphics
+├── manim_viz.py       # Manim Cinematic MP4 generation
+├── requirements.txt   # Dependencies
+└── logo.png           # Visual identity
 ```
-
----
-
-# 🧩 Project Components
-
-| File               | Responsibility                                                      |
-| ------------------ | ------------------------------------------------------------------- |
-| `app.py`           | Main Streamlit application and simulation orchestration             |
-| `physics.py`       | CR3BP equations, Lagrange points, stability and Jacobi calculations |
-| `rebound_sim.py`   | REBOUND/IAS15 numerical integration                                 |
-| `frames.py`        | Inertial-to-rotating coordinate transformation                      |
-| `viz.py`           | Plotly visualization and animation                                  |
-| `manim_viz.py`     | Cinematic Manim rendering                                           |
-| `requirements.txt` | Python dependencies                                                 |
-| `logo.png`         | Celestia visual identity                                            |
 
 ---
 
