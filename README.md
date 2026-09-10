@@ -10,10 +10,7 @@
 
 <br>
 
-<a href="https://www.loom.com/share/03f1dd0426674b44b99479f8a24b7577">
-  <img src="https://img.shields.io/badge/🌟%20Loom-Watch%20Walkthrough-6E56CF?style=for-the-badge" alt="Watch Loom Walkthrough"/>
-</a>
-&nbsp;
+
 <img src="https://img.shields.io/badge/CR3BP-Simulation-72E6DE?style=for-the-badge" alt="CR3BP"/>
 &nbsp;
 <img src="https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
@@ -181,62 +178,24 @@ This coordinate system is used throughout the Lagrange-point calculations.
 
 # 🛰️ Lagrange Point Solver
 
-Celestia calculates all five classical equilibrium points dynamically.
+Celestia calculates all five classical equilibrium points dynamically, combining numerical root-finding with analytical geometry.
 
-## L1, L2 and L3
+### 📍 The Collinear Points (L1, L2, L3)
+The three collinear points lie along the axis connecting the two primary bodies. They are found by solving the nonlinear equilibrium equation:
 
-The three collinear points are obtained by solving the nonlinear equilibrium equation:
+$$ x - (1-\mu)\frac{x+\mu}{|x+\mu|^3} - \mu\frac{x-1+\mu}{|x-1+\mu|^3} = 0 $$
 
-$$
-x
--
-(1-\mu)\frac{x+\mu}{|x+\mu|^3}
--
-\mu\frac{x-1+\mu}{|x-1+\mu|^3}
-=0
-$$
-
-Celestia uses numerical root finding through SciPy.
-
-### L1
-
-Located between the two primary bodies.
-
-### L2
-
-Located beyond the secondary body.
-
-### L3
-
-Located beyond the primary body on the opposite side of the system.
-
-The implementation uses `scipy.optimize.brentq` for robust bracketed root solving, with a Newton-method fallback for L1 when required.
+We utilize `scipy.optimize.brentq` for robust bracketed root solving (with a Newton-method fallback) to locate these points:
+- **L1**: Between the two primary bodies.
+- **L2**: Beyond the secondary body.
+- **L3**: Beyond the primary body on the opposite side.
 
 ---
 
-## L4 and L5
+### 🔺 The Triangular Points (L4, L5)
+The L4 and L5 points have an elegant, analytical closed-form solution. They form equilateral triangles with the primary bodies:
 
-The triangular equilibrium points have an analytical closed-form solution:
-
-$$
-x=\frac12-\mu
-$$
-
-$$
-y=\pm\frac{\sqrt3}{2}
-$$
-
-giving:
-
-$$
-L4=\left(\frac12-\mu,\frac{\sqrt3}{2}\right)
-$$
-
-$$
-L5=\left(\frac12-\mu,-\frac{\sqrt3}{2}\right)
-$$
-
-These points form equilateral triangles with the two primary bodies.
+$$ L_{4,5} = \left(\frac{1}{2}-\mu, \pm\frac{\sqrt{3}}{2}\right) $$
 
 ---
 
@@ -994,6 +953,14 @@ The project combines software engineering, numerical simulation, astronomy, orbi
 <sub>
 Built with Python · NumPy · SciPy · REBOUND · Plotly · Streamlit · Manim
 </sub>
+
+<br><br>
+
+<h4>Built by <b>Priyanshu Sharan</b></h4>
+
+<a href="https://www.linkedin.com/in/priyanshusharan/">
+  <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Profile"/>
+</a>
 
 </div>
 
