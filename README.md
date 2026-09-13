@@ -668,7 +668,22 @@ FFmpeg is required for the cinematic video-rendering pipeline.
 
 ---
 
-## Installation
+## Desktop Application (No Python Required)
+
+The easiest way to run Celestia is to use the pre-packaged standalone executables. You do not need Python or any dependencies installed.
+
+1. Go to the **[Releases](https://github.com/priyanshusharan-cmd/celestia/releases)** page of this repository.
+2. Download the executable for your operating system:
+   - **Windows:** Download `Celestia-Windows.exe`
+   - **Mac:** Download `Celestia-macOS`
+3. Double-click the downloaded file to run it.
+4. A local server will start in the background, and your default web browser will automatically open Celestia!
+
+*(Note: On Mac, you may need to right-click the file and select "Open" to bypass the unrecognized developer warning, or grant it execute permissions via terminal: `chmod +x Celestia-macOS`).*
+
+---
+
+## Installation from Source (For Developers)
 
 Clone the repository:
 
