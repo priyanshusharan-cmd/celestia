@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./logo.png" alt="Celestia Logo" width="360"/>
+<img src="./logo.png" alt="Celestia Logo" width="120"/>
 
 # ✦ CELESTIA ✦
 
