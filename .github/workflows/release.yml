@@ -1,0 +1,77 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build Executable
+      run: python build.py
+
+    - name: Rename executable (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        mv dist/Celestia-windows.exe dist/Celestia-Windows.exe
+      shell: bash
+
+    - name: Rename executable (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        mv dist/Celestia-mac dist/Celestia-macOS
+      shell: bash
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Celestia-${{ matrix.os }}
+        path: |
+          dist/Celestia-Windows.exe
+          dist/Celestia-macOS
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        merge-multiple: true
+
+    - name: Create Release and Upload Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/*
+        generate_release_notes: true
+      if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
