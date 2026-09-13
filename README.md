@@ -2,7 +2,7 @@
 
 <img src="./logo.png" alt="Celestia Logo" width="200"/>
 
-### Orbital Dynamics Laboratory
+## Celestia - Orbital Dynamics Laboratory
 
 **Cosmic Code Hackathon 2026 · BMS College of Engineering**
 
