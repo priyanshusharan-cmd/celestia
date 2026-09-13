@@ -879,24 +879,16 @@ The project combines software engineering, numerical simulation, astronomy, orbi
 
 ## ✦ Explore the Equilibria. Disturb the System. Understand the Orbit. ✦
 
-<br>
-
 **CELESTIA**
-
 *Explore · Simulate · Orbit · Beyond*
 
-<br>
-
-<sub>
-Built with Python · NumPy · SciPy · REBOUND · Plotly · Streamlit · Manim
-</sub>
-
-<br><br>
+<sub>Built with Python · NumPy · SciPy · REBOUND · Plotly · Streamlit · Manim</sub>
 
 <h4>Built by <b>Priyanshu Sharan</b></h4>
 
 <a href="https://www.linkedin.com/in/priyanshusharan/">
-  <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white" alt="LinkedIn Profile"/>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn Profile" width="30" style="border-radius: 4px;"/>
 </a>
 
 </div>
+
