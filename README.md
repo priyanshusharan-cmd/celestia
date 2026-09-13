@@ -836,33 +836,12 @@ The implementation intentionally exposes these concepts through interactive comp
 
 # 🏆 Project Highlights
 
-<div align="center">
-
-### Mathematical Model
-
-**CR3BP + dynamically solved Lagrange points**
-
-### Numerical Engine
-
-**REBOUND + IAS15**
-
-### Stability
-
-**Linearized rotating-frame eigenvalue analysis**
-
-### Visualization
-
-**Interactive 2D + 3D Plotly environments**
-
-### Rendering
-
-**Manim cinematic orbital animation**
-
-### Interaction
-
-**Live mass, separation and perturbation controls**
-
-</div>
+- **Mathematical Model:** CR3BP + dynamically solved Lagrange points
+- **Numerical Engine:** REBOUND + IAS15
+- **Stability:** Linearized rotating-frame eigenvalue analysis
+- **Visualization:** Interactive 2D + 3D Plotly environments
+- **Rendering:** Manim cinematic orbital animation
+- **Interaction:** Live mass, separation and perturbation controls
 
 ---
 
@@ -917,7 +896,7 @@ Built with Python · NumPy · SciPy · REBOUND · Plotly · Streamlit · Manim
 <h4>Built by <b>Priyanshu Sharan</b></h4>
 
 <a href="https://www.linkedin.com/in/priyanshusharan/">
-  <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Profile"/>
+  <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white" alt="LinkedIn Profile"/>
 </a>
 
 </div>
