@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+.git/
+.github/
+.streamlit/
+.streamlit-home/
+.ruff_cache/
+manim_media/
+.DS_Store
+*.mov
+*.mp4
