@@ -378,7 +378,7 @@ CUSTOM_CSS = """
     p, label, [data-testid="stCaptionContainer"] { color: var(--muted); }
     .sidebar-brand { padding: .75rem .15rem 1.2rem; }
     .sidebar-brand__eyebrow, .eyebrow { color: var(--cyan); font-family:'DM Mono', monospace; font-size:.67rem; text-transform:uppercase; letter-spacing:.14em; }
-    .sidebar-brand__title { margin:.35rem 0 .28rem; color:var(--ink); font-size:1.55rem; letter-spacing:-.07em; font-weight:800; }
+    .sidebar-brand__title { margin:.35rem 0 .28rem; padding-right:3.75rem; color:var(--ink); font-size:1.55rem; letter-spacing:-.07em; font-weight:800; }
     .sidebar-brand__sub { color:var(--muted); font-size:.75rem; line-height:1.45; }
     .sidebar-rule { height:1px; margin:.35rem 0 .45rem; background:linear-gradient(90deg,var(--cyan),transparent); opacity:.55; }
     .control-card__head { display:flex; align-items:flex-start; justify-content:space-between; gap:.7rem; margin:.05rem 0 .8rem; }
@@ -431,8 +431,19 @@ CUSTOM_CSS = """
     [data-testid="stPlotlyChart"], [data-testid="stPlotlyChart"] > div { width:100% !important; max-width:100% !important; min-width:0 !important; }
     [data-testid="stRadio"] div[role="radiogroup"] { flex-wrap:wrap; row-gap:.35rem; }
     hr { border-color:var(--line) !important; margin:1.6rem 0 !important; }
-    [data-testid="stSidebarContent"] { padding-top: 1.5rem !important; }
-    [data-testid="stSidebarHeader"] { padding-top:env(safe-area-inset-top) !important; }
+    [data-testid="stSidebarContent"] { padding-top:.55rem !important; }
+    /* Streamlit normally reserves a tall row above the sidebar for this
+       button. Float it beside the brand title so controls begin near the top. */
+    [data-testid="stSidebarHeader"] {
+        position:absolute !important;
+        top:max(2.55rem, calc(env(safe-area-inset-top) + 2.55rem)) !important;
+        right:1rem !important;
+        width:auto !important;
+        min-height:0 !important;
+        padding:0 !important;
+        z-index:20 !important;
+    }
+    [data-testid="stSidebarHeader"] > div { padding:0 !important; }
 
     /* CSS fallback for browsers that delay applying the viewport script. It
        keeps the desktop canvas intact and lets the page pan horizontally. */
