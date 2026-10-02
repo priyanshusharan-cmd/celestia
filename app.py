@@ -1,5 +1,6 @@
 # pylint: disable=missing-docstring, redefined-outer-name, invalid-name, line-too-long, too-many-arguments, too-many-positional-arguments, broad-exception-caught, import-error
 import logging
+from pathlib import Path
 
 import numpy as np  # type: ignore
 import streamlit as st  # type: ignore
@@ -24,36 +25,69 @@ st.set_page_config(
 )
 
 
+@st.cache_data(max_entries=4, show_spinner=False)
+def render_video_bytes(
+    mu: float,
+    sat_rotating: np.ndarray,
+    actual_name1: str,
+    actual_name2: str,
+    m1_val: float,
+    m2_val: float,
+) -> bytes:
+    """Render once per trajectory and keep the small MP4 in Streamlit's cache."""
+    video_path = None
+    try:
+        video_path = manim_viz.render_trajectory(
+            mu,
+            sat_rotating,
+            "orbital_simulation",
+            actual_name1,
+            actual_name2,
+            m1_val,
+            m2_val,
+        )
+        return Path(video_path).read_bytes()
+    finally:
+        manim_viz.cleanup_render(video_path)
+
+
 @st.dialog("Export Cinematic Video", width="large")
 def export_video_dialog(mu, sat_rotating, actual_name1, actual_name2, m1_val, m2_val):
-    st.write("Rendering a high-quality cinematic animation. Please wait...")
+    st.write("Create a lightweight cinematic MP4 of the current forecast.")
     if sat_rotating is not None:
-        rendered_video_path = None
-        with st.spinner("Manim is rendering the simulation..."):
+        video_data = None
+        with st.spinner(
+            "Rendering the video — this can take 10–30 seconds on Render..."
+        ):
             try:
-                old_video_path = st.session_state.get("manim_video_path")
-                video_path = manim_viz.render_trajectory(
+                video_data = render_video_bytes(
                     mu,
                     sat_rotating,
-                    "orbital_simulation",
                     actual_name1,
                     actual_name2,
                     m1_val,
                     m2_val,
                 )
-                st.session_state.manim_video_path = video_path
-                rendered_video_path = video_path
-                if old_video_path != video_path:
-                    manim_viz.cleanup_render(old_video_path)
-            except (OSError, RuntimeError, ValueError):
+            except Exception:  # Manim/FFmpeg expose several backend exception types.
                 LOGGER.exception("Video export failed")
                 st.error(
-                    "The video could not be rendered. Please try again in a moment."
+                    "The video could not be rendered. Please retry once; if it still "
+                    "fails, the hosting instance may be temporarily short on resources."
                 )
-        if rendered_video_path:
-            st.video(rendered_video_path)
+        if video_data:
+            st.success("Video ready.")
+            st.video(video_data)
+            st.download_button(
+                "Download MP4",
+                data=video_data,
+                file_name="celestia-orbit.mp4",
+                mime="video/mp4",
+                icon=":material/download:",
+                on_click="ignore",
+                width="stretch",
+            )
     else:
-        st.error("No trajectory available to render.")
+        st.info("Select a Lagrange point first, then export the generated forecast.")
 
 
 CUSTOM_CSS = """
@@ -222,12 +256,14 @@ CUSTOM_CSS = """
     [data-testid="stMainMenuButton"],
     [data-testid="stDecoration"] { display:none !important; }
     [data-testid="stSidebarCollapseButton"] button,
-    [data-testid="stSidebarCollapsedControl"] button {
+    [data-testid="stSidebarCollapsedControl"] button,
+    [data-testid="stExpandSidebarButton"] {
         min-width:2.75rem;
         min-height:2.75rem;
         color:var(--ink) !important;
         background:rgba(13,24,52,.92) !important;
         border:1px solid rgba(114,230,222,.28) !important;
+        border-radius:12px !important;
     }
     
     [data-testid="stAppViewContainer"] > .main { padding-top: 0; }
@@ -303,6 +339,31 @@ CUSTOM_CSS = """
 
     @media (max-width: 900px) {
         [data-testid="stHeader"] { height:3.25rem; }
+        [data-testid="stExpandSidebarButton"] {
+            position:fixed !important;
+            top:max(.65rem, env(safe-area-inset-top)) !important;
+            left:max(.65rem, env(safe-area-inset-left)) !important;
+            z-index:999990 !important;
+            width:auto !important;
+            padding:0 .85rem !important;
+            display:inline-flex !important;
+            align-items:center !important;
+            gap:.45rem !important;
+            box-shadow:0 8px 24px rgba(0,0,0,.32) !important;
+        }
+        [data-testid="stExpandSidebarButton"]::after {
+            content:"Mission controls";
+            color:var(--ink);
+            font-family:'Manrope',sans-serif;
+            font-size:.72rem;
+            font-weight:700;
+            letter-spacing:.02em;
+            white-space:nowrap;
+        }
+        [data-testid="stSidebarCollapseButton"] button {
+            position:relative;
+            z-index:2;
+        }
         [data-testid="stSidebar"] {
             min-width:0 !important;
             max-width:min(92vw, 21rem) !important;
@@ -456,8 +517,6 @@ if "body1" not in st.session_state:
     st.session_state.map_body_positions = []
     st.session_state.map_placement_notice = False
     st.session_state.last_map_click = None
-    st.session_state.manim_video_path = None
-    st.session_state.is_rendering = False
 
 st.html("""
 <section class="hero">
@@ -632,7 +691,6 @@ if mu is not None:
             if selected_point is None:
                 st.session_state.trajectory = None
                 st.session_state.trajectory_times = None
-                st.session_state.is_rendering = False
             else:
                 all_points = physics.all_lagrange_points(mu)
                 base_x, base_y = all_points[selected_point]
@@ -654,7 +712,6 @@ if mu is not None:
             LOGGER.exception("Orbital forecast failed")
             st.session_state.trajectory = None
             st.session_state.trajectory_times = None
-            st.session_state.is_rendering = False
             simulation_error = True
 
         if simulation_error:
@@ -701,7 +758,14 @@ if mu is not None:
         </div>
         """)
     with col_btn:
-        if st.button("Export Video", width="stretch"):
+        if st.button(
+            "Export video",
+            width="stretch",
+            disabled=st.session_state.trajectory is None,
+            help="Select a Lagrange point first"
+            if st.session_state.trajectory is None
+            else None,
+        ):
             export_video_dialog(
                 mu,
                 st.session_state.trajectory,

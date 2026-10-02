@@ -43,7 +43,7 @@ class OrbitalScene(Scene):
         # Deep space background
         self.camera.background_color = "#040812"
 
-        # Create beautiful background stars
+        # Keep the background lightweight enough for small hosted instances.
         np.random.seed(42)
         star_colors = ["#ffffff", "#eaf0ff", "#9e8cff", "#72e6de"]
         stars = VGroup(
@@ -54,7 +54,7 @@ class OrbitalScene(Scene):
                     color=np.random.choice(star_colors),
                     fill_opacity=np.random.uniform(0.1, 0.9),
                 )
-                for _ in range(400)
+                for _ in range(140)
             ]
         )
         self.add(stars)
@@ -63,6 +63,7 @@ class OrbitalScene(Scene):
             return
 
         points = self.trajectory * 3.0
+        points_3d = np.column_stack((points, np.zeros(len(points))))
 
         # Compute radius based on mass
         def get_radius(m):
@@ -139,8 +140,7 @@ class OrbitalScene(Scene):
             # Rotate the path using vectorized numpy operations
             c, s = np.cos(angle), np.sin(angle)
             rot_mat = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
-            pts_3d = np.column_stack((points, np.zeros(len(points))))
-            rotated_points = np.dot(pts_3d, rot_mat.T)
+            rotated_points = np.dot(points_3d, rot_mat.T)
 
             rotating_path.set_points_as_corners(rotated_points)
 
@@ -169,8 +169,8 @@ class OrbitalScene(Scene):
 
         self.add(inertial_trace)
 
-        self.play(tracker.animate.set_value(1), run_time=8.0, rate_func=linear)
-        self.wait(1.5)
+        self.play(tracker.animate.set_value(1), run_time=4.0, rate_func=linear)
+        self.wait(0.4)
 
 
 def render_trajectory(
@@ -181,6 +181,9 @@ def render_trajectory(
         raise ValueError("Trajectory must contain at least two x/y positions.")
     if len(trajectory) > 10_000 or not np.all(np.isfinite(trajectory)):
         raise ValueError("Trajectory is too large or contains invalid values.")
+    if len(trajectory) > 320:
+        sample_indices = np.linspace(0, len(trajectory) - 1, 320, dtype=int)
+        trajectory = trajectory[sample_indices]
 
     safe_stem = re.sub(r"[^A-Za-z0-9_-]+", "-", Path(output_file).stem).strip("-")
     safe_stem = (safe_stem or "orbital-simulation")[:48]
@@ -197,9 +200,10 @@ def render_trajectory(
                     "media_dir": str(media_dir),
                     "output_file": unique_output,
                     "format": "mp4",
-                    "pixel_width": 1280,
-                    "pixel_height": 720,
-                    "frame_rate": 60,
+                    "pixel_width": 854,
+                    "pixel_height": 480,
+                    "frame_rate": 24,
+                    "verbosity": "ERROR",
                     "disable_caching": True,
                 }
             ),
