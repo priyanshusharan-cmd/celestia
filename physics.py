@@ -1,21 +1,37 @@
+from typing import Any
+
 import numpy as np  # type: ignore
 from scipy.optimize import brentq, newton  # type: ignore
+
+# In units of AU^3 / (Earth mass * year^2). This keeps the UI's Earth-mass,
+# AU, and year labels physically consistent throughout the simulation.
+SOLAR_MASS_IN_EARTH_MASSES = 332946.0
+GRAVITATIONAL_CONSTANT = 4.0 * np.pi**2 / SOLAR_MASS_IN_EARTH_MASSES
 
 
 def mass_ratio(m1: float, m2: float) -> float:
     """Returns mu = m2 / (m1 + m2). Raises ValueError if m1<=0 or m2<=0."""
-    if m1 <= 0 or m2 <= 0:
-        raise ValueError("Masses must be strictly positive.")
+    if not np.isfinite(m1) or not np.isfinite(m2) or m1 <= 0 or m2 <= 0:
+        raise ValueError("Masses must be finite and strictly positive.")
     return m2 / (m1 + m2)
+
+
+def orbital_angular_velocity(m_total: float, separation: float) -> float:
+    """Return orbital angular velocity in radians/year for AU and Earth masses."""
+    if (
+        not np.isfinite(m_total)
+        or not np.isfinite(separation)
+        or m_total <= 0
+        or separation <= 0
+    ):
+        raise ValueError("Total mass and separation must be finite and positive.")
+    return float(np.sqrt(GRAVITATIONAL_CONSTANT * m_total / separation**3))
 
 
 def primary_positions(mu: float) -> tuple[float, float]:
     """Returns (x1, x2): positions of the two primaries on the x-axis in
     normalized CR3BP units, barycenter at origin. x1 = -mu, x2 = 1 - mu."""
     return -mu, 1.0 - mu
-
-
-from typing import Any
 
 
 def effective_potential(x: Any, y: Any, mu: float) -> Any:
@@ -49,7 +65,9 @@ def find_L1(mu: float) -> float:
     as a starting guess with scipy.optimize.newton instead."""
     try:
         try:
-            return float(brentq(collinear_equation, -mu + 1e-6, 1.0 - mu - 1e-6, args=(mu,)))  # type: ignore
+            return float(
+                brentq(collinear_equation, -mu + 1e-6, 1.0 - mu - 1e-6, args=(mu,))
+            )  # type: ignore
         except ValueError:
             guess = 1.0 - mu - (mu / 3.0) ** (1 / 3.0)
             return float(newton(collinear_equation, guess, args=(mu,)))  # type: ignore
@@ -92,6 +110,8 @@ def L4_L5(mu: float) -> tuple[tuple[float, float], tuple[float, float]]:
 def all_lagrange_points(mu: float) -> dict:
     """Returns {'L1': (x,0.0), 'L2': (x,0.0), 'L3': (x,0.0), 'L4': (x,y),
     'L5': (x,y)} using the functions above."""
+    if not np.isfinite(mu) or not 0.0 < mu <= 0.5:
+        raise ValueError("Mass ratio must be finite and in the interval (0, 0.5].")
     l1_x = find_L1(mu)
     l2_x = find_L2(mu)
     l3_x = find_L3(mu)

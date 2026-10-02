@@ -1,6 +1,6 @@
-streamlit
-numpy
-scipy
-plotly
-rebound
-manim
+streamlit==1.64.0
+numpy==2.5.2
+scipy==1.18.0
+plotly==6.9.0
+rebound==5.2.1
+manim==0.21.0

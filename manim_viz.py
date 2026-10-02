@@ -1,3 +1,10 @@
+import re
+import shutil
+import tempfile
+import threading
+import uuid
+from pathlib import Path
+
 import numpy as np  # type: ignore
 from manim import (  # type: ignore
     BOLD,
@@ -9,12 +16,16 @@ from manim import (  # type: ignore
     Scene,
     Text,
     TracedPath,
+    ValueTracker,
     VGroup,
     VMobject,
-    ValueTracker,
-    config,
     linear,
+    tempconfig,
 )
+
+_RENDER_LOCK = threading.Lock()
+_RENDER_PREFIX = "celestia-render-"
+
 
 class OrbitalScene(Scene):
     def __init__(
@@ -165,13 +176,59 @@ class OrbitalScene(Scene):
 def render_trajectory(
     mu, trajectory, output_file, body1_name, body2_name, m1_mass, m2_mass
 ):
-    config.media_dir = "./manim_media"
-    config.output_file = output_file
-    config.format = "mp4"
-    config.pixel_width = 1280
-    config.pixel_height = 720
-    config.frame_rate = 60
+    trajectory = np.asarray(trajectory, dtype=float)
+    if trajectory.ndim != 2 or trajectory.shape[1] != 2 or len(trajectory) < 2:
+        raise ValueError("Trajectory must contain at least two x/y positions.")
+    if len(trajectory) > 10_000 or not np.all(np.isfinite(trajectory)):
+        raise ValueError("Trajectory is too large or contains invalid values.")
 
-    scene = OrbitalScene(mu, trajectory, body1_name, body2_name, m1_mass, m2_mass)
-    scene.render()
-    return f"{config.media_dir}/videos/720p60/{output_file}.mp4"
+    safe_stem = re.sub(r"[^A-Za-z0-9_-]+", "-", Path(output_file).stem).strip("-")
+    safe_stem = (safe_stem or "orbital-simulation")[:48]
+    unique_output = f"{safe_stem}-{uuid.uuid4().hex[:10]}"
+    media_dir = Path(tempfile.mkdtemp(prefix=_RENDER_PREFIX))
+
+    try:
+        # Manim configuration is process-global, so serialize renders while still
+        # giving every session a private output directory and filename.
+        with (
+            _RENDER_LOCK,
+            tempconfig(
+                {
+                    "media_dir": str(media_dir),
+                    "output_file": unique_output,
+                    "format": "mp4",
+                    "pixel_width": 1280,
+                    "pixel_height": 720,
+                    "frame_rate": 60,
+                    "disable_caching": True,
+                }
+            ),
+        ):
+            scene = OrbitalScene(
+                mu,
+                trajectory,
+                str(body1_name)[:80],
+                str(body2_name)[:80],
+                m1_mass,
+                m2_mass,
+            )
+            scene.render()
+            movie_path = Path(scene.renderer.file_writer.movie_file_path).resolve()
+        if not movie_path.is_file() or media_dir.resolve() not in movie_path.parents:
+            raise RuntimeError("Manim did not create the expected video output.")
+        return str(movie_path)
+    except Exception:
+        shutil.rmtree(media_dir, ignore_errors=True)
+        raise
+
+
+def cleanup_render(video_path: str | None) -> None:
+    """Remove only a render directory created by this module."""
+    if not video_path:
+        return
+    candidate = Path(video_path).resolve()
+    temp_root = Path(tempfile.gettempdir()).resolve()
+    for parent in (candidate.parent, *candidate.parents):
+        if parent.parent == temp_root and parent.name.startswith(_RENDER_PREFIX):
+            shutil.rmtree(parent, ignore_errors=True)
+            return

@@ -7,14 +7,24 @@ import physics
 
 def build_simulation(mu: float, m_total: float = 1.0, separation: float = 1.0):
     """
-    Creates and returns a rebound.Simulation with G=1, in normalized CR3BP
-    units.
+    Creates and returns a rebound.Simulation using AU, Earth-mass, and year
+    units while preserving normalized CR3BP geometry.
     """
+    if not np.isfinite(mu) or not 0.0 < mu <= 0.5:
+        raise ValueError("Mass ratio must be finite and in the interval (0, 0.5].")
+    if (
+        not np.isfinite(m_total)
+        or not np.isfinite(separation)
+        or m_total <= 0
+        or separation <= 0
+    ):
+        raise ValueError("Total mass and separation must be finite and positive.")
+
     sim = rebound.Simulation()
-    sim.G = 1.0
+    sim.G = physics.GRAVITATIONAL_CONSTANT
     sim.integrator = "ias15"
 
-    omega = np.sqrt(sim.G * m_total / (separation**3))
+    omega = physics.orbital_angular_velocity(m_total, separation)
 
     m1 = (1.0 - mu) * m_total
     x1 = -mu * separation
@@ -36,11 +46,22 @@ def add_satellite(sim, x: float, y: float, vx: float = 0.0, vy: float = 0.0):
     sim.add(m=0.0, x=x, y=y, vx=vx, vy=vy)
 
 
-def run_and_record(sim, t_end: float, n_samples: int = 500) -> dict:
+def run_and_record(
+    sim, t_end: float, n_samples: int = 500, escape_radius: float = 3.5
+) -> dict:
     """
     Integrates sim from its current time to t_end, sampling n_samples
     evenly-spaced times.
     """
+    if not np.isfinite(t_end) or t_end <= sim.t:
+        raise ValueError("Simulation end time must be finite and after its start time.")
+    if not isinstance(n_samples, int) or not 2 <= n_samples <= 10_000:
+        raise ValueError("n_samples must be an integer between 2 and 10,000.")
+    if not np.isfinite(escape_radius) or escape_radius <= 0:
+        raise ValueError("Escape radius must be finite and positive.")
+    if len(sim.particles) < 3:
+        raise ValueError("Simulation requires two primary bodies and one satellite.")
+
     times = np.linspace(sim.t, t_end, n_samples)
 
     p1_pos = np.zeros((n_samples, 2))
@@ -53,12 +74,16 @@ def run_and_record(sim, t_end: float, n_samples: int = 500) -> dict:
         p2 = sim.particles[1]
         sat = sim.particles[-1]
 
+        state = np.array([p1.x, p1.y, p2.x, p2.y, sat.x, sat.y])
+        if not np.all(np.isfinite(state)):
+            raise RuntimeError("Simulation produced a non-finite position.")
+
         p1_pos[i] = [p1.x, p1.y]
         p2_pos[i] = [p2.x, p2.y]
         sat_pos[i] = [sat.x, sat.y]
 
         # Stop simulation if satellite is ejected far outside the map
-        if np.sqrt(sat.x**2 + sat.y**2) > 3.5:
+        if np.hypot(sat.x, sat.y) > escape_radius:
             times = times[: i + 1]
             p1_pos = p1_pos[: i + 1]
             p2_pos = p2_pos[: i + 1]
@@ -77,8 +102,7 @@ def main():
     l4_x, l4_y = l_points["L4"]
 
     # Calculate initial velocity for L4 in inertial frame (at rest in rotating frame)
-    # G=1, m_total=1, separation=1 => omega = 1
-    omega = 1.0
+    omega = physics.orbital_angular_velocity(1.0, 1.0)
     vx = -omega * l4_y
     vy = omega * l4_x
 
@@ -103,6 +127,7 @@ def main():
     max_dist = np.max(dist)
 
     print(f"Max distance from L4 (in rotating frame) over 2 periods: {max_dist}")
+
 
 if __name__ == "__main__":
     main()

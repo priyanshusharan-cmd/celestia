@@ -1,4 +1,6 @@
 # pylint: disable=missing-docstring, redefined-outer-name, invalid-name, line-too-long, too-many-arguments, too-many-positional-arguments, broad-exception-caught, import-error
+import logging
+
 import numpy as np  # type: ignore
 import streamlit as st  # type: ignore
 
@@ -8,13 +10,17 @@ import physics
 import rebound_sim
 import viz
 
+LOGGER = logging.getLogger(__name__)
+FORECAST_PERIODS = 3.0
+TRAJECTORY_SAMPLES = 800
+
 st.set_page_config(
     layout="wide",
     page_title="Celestia · Orbital Lab",
     page_icon="✦",
-    # Streamlit keeps this open on wide screens and collapses it on narrow
-    # screens, so the mission controls never cover the whole mobile viewport.
-    initial_sidebar_state="auto",
+    # Start with the workspace unobstructed on phones and tablets. Mission
+    # controls remain one tap away via Streamlit's visible sidebar button.
+    initial_sidebar_state="collapsed",
 )
 
 
@@ -22,19 +28,30 @@ st.set_page_config(
 def export_video_dialog(mu, sat_rotating, actual_name1, actual_name2, m1_val, m2_val):
     st.write("Rendering a high-quality cinematic animation. Please wait...")
     if sat_rotating is not None:
+        rendered_video_path = None
         with st.spinner("Manim is rendering the simulation..."):
-            video_path = manim_viz.render_trajectory(
-                mu,
-                sat_rotating,
-                "orbital_simulation",
-                actual_name1,
-                actual_name2,
-                m1_val,
-                m2_val,
-            )
-            st.session_state.manim_video_path = video_path
-        if st.session_state.get("manim_video_path"):
-            st.video(st.session_state.manim_video_path)
+            try:
+                old_video_path = st.session_state.get("manim_video_path")
+                video_path = manim_viz.render_trajectory(
+                    mu,
+                    sat_rotating,
+                    "orbital_simulation",
+                    actual_name1,
+                    actual_name2,
+                    m1_val,
+                    m2_val,
+                )
+                st.session_state.manim_video_path = video_path
+                rendered_video_path = video_path
+                if old_video_path != video_path:
+                    manim_viz.cleanup_render(old_video_path)
+            except (OSError, RuntimeError, ValueError):
+                LOGGER.exception("Video export failed")
+                st.error(
+                    "The video could not be rendered. Please try again in a moment."
+                )
+        if rendered_video_path:
+            st.video(rendered_video_path)
     else:
         st.error("No trajectory available to render.")
 
@@ -46,7 +63,7 @@ CUSTOM_CSS = """
     :root { --ink: #eaf0ff; --muted: #8190af; --panel: rgba(17, 27, 52, .72); --line: rgba(164, 185, 255, .13); --cyan: #72e6de; --violet: #9e8cff; }
     *, *::before, *::after { box-sizing: border-box; }
     html, body, .stApp, [data-testid="stAppViewContainer"] { max-width:100%; overflow-x:clip; }
-    [data-testid="stMain"], [data-testid="stMainBlockContainer"], [data-testid="column"] { min-width:0; }
+    [data-testid="stMain"], [data-testid="stMainBlockContainer"], [data-testid="stColumn"] { min-width:0; }
     #splash-screen {
         position: fixed;
         inset: 0;
@@ -200,7 +217,10 @@ CUSTOM_CSS = """
     }
     /* Keep Streamlit chrome quiet while preserving the sidebar controls. */
     [data-testid="stHeader"] { background:transparent !important; }
-    [data-testid="stToolbar"], [data-testid="stDecoration"] { display:none !important; }
+    [data-testid="stToolbar"] { display:flex !important; background:transparent !important; }
+    [data-testid="stAppDeployButton"],
+    [data-testid="stMainMenuButton"],
+    [data-testid="stDecoration"] { display:none !important; }
     [data-testid="stSidebarCollapseButton"] button,
     [data-testid="stSidebarCollapsedControl"] button {
         min-width:2.75rem;
@@ -283,7 +303,12 @@ CUSTOM_CSS = """
 
     @media (max-width: 900px) {
         [data-testid="stHeader"] { height:3.25rem; }
-        [data-testid="stSidebar"] { width:min(92vw, 21rem) !important; min-width:0 !important; max-width:100vw !important; }
+        [data-testid="stSidebar"] {
+            min-width:0 !important;
+            max-width:min(92vw, 21rem) !important;
+            /* Keep the tablet canvas full width; the sidebar overlays it when open. */
+            margin-right:calc(-1 * min(300px, 92vw)) !important;
+        }
         [data-testid="stSidebar"] > div:first-child { width:100% !important; }
         .block-container {
             max-width:100%;
@@ -306,9 +331,10 @@ CUSTOM_CSS = """
         }
         [data-testid="stDialog"] video { max-height:60dvh !important; }
         [data-testid="stMain"] [data-testid="stHorizontalBlock"] { flex-wrap:wrap !important; }
-        [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
             flex:1 1 calc(50% - .75rem) !important;
             width:auto !important;
+            max-width:100% !important;
         }
         [data-testid="stMain"] [data-testid="stMetricValue"] { white-space:normal; overflow-wrap:anywhere; }
     }
@@ -325,9 +351,10 @@ CUSTOM_CSS = """
         .section-head__detail { width:100%; }
         .field-cue { padding:.72rem; }
         .field-cue__legend > div { flex:1 1 8rem; }
-        [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="column"] { flex-basis:100% !important; }
+        [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex-basis:100% !important; }
         [data-testid="stMain"] .stButton > button { width:100%; }
         [data-testid="stPlotlyChart"] { border-radius:13px; }
+        [data-testid="stPlotlyChart"] .modebar { display:none !important; }
         [data-testid="stMetric"] { padding:.55rem .2rem; }
     }
 </style>
@@ -362,6 +389,56 @@ SOLAR_SYSTEM = {
     "Pluto": 0.0022,
     "Custom": None,
 }
+
+
+@st.cache_data(max_entries=64, show_spinner=False)
+def calculate_trajectory(
+    mu: float,
+    m_total: float,
+    separation: float,
+    start_x_normalized: float,
+    start_y_normalized: float,
+    velocity_trim: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Run one bounded forecast and return normalized rotating-frame positions."""
+    values = np.array(
+        [
+            mu,
+            m_total,
+            separation,
+            start_x_normalized,
+            start_y_normalized,
+            velocity_trim,
+        ],
+        dtype=float,
+    )
+    if not np.all(np.isfinite(values)) or m_total <= 0 or separation <= 0:
+        raise ValueError("Simulation inputs must be finite and positive.")
+
+    omega = physics.orbital_angular_velocity(m_total, separation)
+    start_x = start_x_normalized * separation
+    start_y = start_y_normalized * separation
+    vx = -omega * start_y
+    vy = omega * start_x
+    speed = float(np.hypot(vx, vy))
+    if speed > 1e-12:
+        # The control is dimensionless: 1.0 equals omega * separation.
+        trim_speed = velocity_trim * omega * separation
+        vx += (vx / speed) * trim_speed
+        vy += (vy / speed) * trim_speed
+
+    sim = rebound_sim.build_simulation(mu, m_total, separation)
+    rebound_sim.add_satellite(sim, start_x, start_y, vx, vy)
+    period = 2.0 * np.pi / omega
+    data = rebound_sim.run_and_record(
+        sim,
+        FORECAST_PERIODS * period,
+        TRAJECTORY_SAMPLES,
+        escape_radius=3.5 * separation,
+    )
+    rotating = frames.to_rotating_frame(data["t"], data["sat"], omega) / separation
+    return rotating, data["t"]
+
 
 # Initialize session state
 if "body1" not in st.session_state:
@@ -424,7 +501,11 @@ with st.sidebar.container(border=True):
     body1 = st.selectbox("Primary Body", list(SOLAR_SYSTEM.keys()), key="body1")
     if body1 == "Custom":
         m1_input = st.number_input(
-            "Mass 1 (Earth Masses)", min_value=1e-6, format="%.4f", key="m1_custom"
+            "Mass 1 (Earth Masses)",
+            min_value=1e-6,
+            max_value=1e9,
+            format="%.4f",
+            key="m1_custom",
         )
     else:
         m1_input = SOLAR_SYSTEM[body1]
@@ -435,7 +516,11 @@ with st.sidebar.container(border=True):
     body2 = st.selectbox("Secondary Body", list(SOLAR_SYSTEM.keys()), key="body2")
     if body2 == "Custom":
         m2_input = st.number_input(
-            "Mass 2 (Earth Masses)", min_value=1e-6, format="%.6f", key="m2_custom"
+            "Mass 2 (Earth Masses)",
+            min_value=1e-6,
+            max_value=1e9,
+            format="%.6f",
+            key="m2_custom",
         )
     else:
         m2_input = SOLAR_SYSTEM[body2]
@@ -542,6 +627,7 @@ if mu is not None:
 
         st.html('<div class="control-divider"></div>')
 
+        simulation_error = False
         try:
             if selected_point is None:
                 st.session_state.trajectory = None
@@ -550,29 +636,32 @@ if mu is not None:
             else:
                 all_points = physics.all_lagrange_points(mu)
                 base_x, base_y = all_points[selected_point]
-                start_x = base_x + perturb_radial
-                start_y = base_y + perturb_tangential
+                start_x_normalized = base_x + perturb_radial
+                start_y_normalized = base_y + perturb_tangential
                 m_total = m1_val + m2_val
-                omega = np.sqrt(1.0 * m_total / (separation**3))
-                vx = -omega * start_y
-                vy = omega * start_x
-                speed = np.sqrt(vx**2 + vy**2)
-                if speed > 1e-9:
-                    vx += (vx / speed) * perturb_velocity
-                    vy += (vy / speed) * perturb_velocity
-                sim = rebound_sim.build_simulation(mu, m_total, separation)
-                rebound_sim.add_satellite(sim, start_x, start_y, vx, vy)
-                period = 2.0 * np.pi / omega
-                t_end = 10.0 * period
-                data = rebound_sim.run_and_record(sim, t_end, 800)
-                sat_rotating = frames.to_rotating_frame(data["t"], data["sat"], omega)
+                sat_rotating, trajectory_times = calculate_trajectory(
+                    mu,
+                    m_total,
+                    separation,
+                    start_x_normalized,
+                    start_y_normalized,
+                    perturb_velocity,
+                )
                 st.session_state.trajectory = sat_rotating
-                st.session_state.trajectory_times = data["t"]
+                st.session_state.trajectory_times = trajectory_times
 
-        except Exception:  # noqa: BLE001
+        except (ArithmeticError, RuntimeError, ValueError):
+            LOGGER.exception("Orbital forecast failed")
             st.session_state.trajectory = None
             st.session_state.trajectory_times = None
             st.session_state.is_rendering = False
+            simulation_error = True
+
+        if simulation_error:
+            st.error(
+                "The forecast could not be calculated for these settings. "
+                "Try smaller perturbations or reset the probe."
+            )
 
     with st.sidebar.container(border=True):
         st.html("""
@@ -581,13 +670,12 @@ if mu is not None:
           <div class="control-card__tag">ANALYSIS</div>
         </div>
         """)
-        st.markdown(
+        st.html(
             """
             <div class="system-summary">
               Select a viewing mode for the simulation.
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
         view_mode_simple = st.radio(
             "Map mode",
@@ -641,7 +729,7 @@ if mu is not None:
             else:
                 badge_html = f'<div class="stability-badge badge-unstable">● {selected_point} · UNSTABLE SADDLE</div>'
 
-            st.markdown(badge_html, unsafe_allow_html=True)
+            st.html(badge_html)
 
     st.html(f"""
     <div class="field-cue">
@@ -716,6 +804,6 @@ if mu is not None:
             r_col3.metric("Mass Ratio (μ)", f"{mu:.6f}")
 
             m_total = m1_val + m2_val
-            omega = np.sqrt(1.0 * m_total / (separation**3))
+            omega = physics.orbital_angular_velocity(m_total, separation)
             period = 2.0 * np.pi / omega
             r_col4.metric("Orbital Period", f"{period:.4f} yrs")

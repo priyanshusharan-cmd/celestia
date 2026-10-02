@@ -10,6 +10,17 @@ def to_rotating_frame(t: np.ndarray, xy: np.ndarray, omega: float) -> np.ndarray
       y_rot = -x*sin(omega*t) + y*cos(omega*t)
     Return shape (N,2). Vectorize with numpy, no Python loop.
     """
+    t = np.asarray(t, dtype=float)
+    xy = np.asarray(xy, dtype=float)
+    if t.ndim != 1 or xy.ndim != 2 or xy.shape != (len(t), 2):
+        raise ValueError("t must have shape (N,) and xy must have shape (N, 2).")
+    if (
+        not np.isfinite(omega)
+        or not np.all(np.isfinite(t))
+        or not np.all(np.isfinite(xy))
+    ):
+        raise ValueError("Frame inputs must contain only finite values.")
+
     theta = omega * t
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
