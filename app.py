@@ -12,7 +12,9 @@ st.set_page_config(
     layout="wide",
     page_title="Celestia · Orbital Lab",
     page_icon="✦",
-    initial_sidebar_state="expanded",
+    # Streamlit keeps this open on wide screens and collapses it on narrow
+    # screens, so the mission controls never cover the whole mobile viewport.
+    initial_sidebar_state="auto",
 )
 
 
@@ -42,9 +44,14 @@ CUSTOM_CSS = """
     @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
 
     :root { --ink: #eaf0ff; --muted: #8190af; --panel: rgba(17, 27, 52, .72); --line: rgba(164, 185, 255, .13); --cyan: #72e6de; --violet: #9e8cff; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body, .stApp, [data-testid="stAppViewContainer"] { max-width:100%; overflow-x:clip; }
+    [data-testid="stMain"], [data-testid="stMainBlockContainer"], [data-testid="column"] { min-width:0; }
     #splash-screen {
         position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
+        inset: 0;
+        min-height: 100dvh;
+        padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
         background: radial-gradient(circle at center, #0e172c 0%, #040812 100%);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
@@ -115,6 +122,10 @@ CUSTOM_CSS = """
         background: linear-gradient(135deg, #ffffff, #9e8cff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        max-width: 100%;
+        padding-left: .35em;
+        text-align: center;
+        overflow-wrap: anywhere;
     }
     #splash-screen p {
         color: #8190af;
@@ -125,6 +136,8 @@ CUSTOM_CSS = """
         text-transform: uppercase;
         opacity: 0;
         animation: fadeInUp 0.8s ease-out 0.3s forwards;
+        max-width: 100%;
+        text-align: center;
     }
     .loading-bar-container {
         width: 250px;
@@ -185,11 +198,17 @@ CUSTOM_CSS = """
         font-family: 'Manrope', sans-serif;
         background: radial-gradient(ellipse 85% 55% at 75% -5%, rgba(82, 72, 180, .20), transparent 70%), radial-gradient(ellipse 55% 40% at 25% 30%, rgba(15, 153, 171, .10), transparent 70%), #070b18;
     }
-    /* Remove Streamlit's default white toolbar elements and header */
-    [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
-    
-    /* Hide the sidebar collapse button so mission control is always visible */
-    [data-testid="stSidebarCollapseButton"] { display: none !important; }
+    /* Keep Streamlit chrome quiet while preserving the sidebar controls. */
+    [data-testid="stHeader"] { background:transparent !important; }
+    [data-testid="stToolbar"], [data-testid="stDecoration"] { display:none !important; }
+    [data-testid="stSidebarCollapseButton"] button,
+    [data-testid="stSidebarCollapsedControl"] button {
+        min-width:2.75rem;
+        min-height:2.75rem;
+        color:var(--ink) !important;
+        background:rgba(13,24,52,.92) !important;
+        border:1px solid rgba(114,230,222,.28) !important;
+    }
     
     [data-testid="stAppViewContainer"] > .main { padding-top: 0; }
     .stApp:before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.28; background-image:linear-gradient(rgba(144,165,255,.035) 1px, transparent 1px),linear-gradient(90deg, rgba(144,165,255,.035) 1px, transparent 1px); background-size:42px 42px; mask-image:linear-gradient(to bottom, black, transparent 75%); }
@@ -198,6 +217,7 @@ CUSTOM_CSS = """
         border-right: 1px solid var(--line);
     }
     [data-testid="stSidebar"] > div:first-child { padding-top: .55rem; }
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] { overflow-x:hidden; }
     [data-testid="stSidebar"] .stVerticalBlock { gap: .8rem; }
     .block-container { max-width: 1560px; padding: 2.2rem 2.65rem 2.8rem; }
     h1, h2, h3 { color: var(--ink) !important; font-family:'Manrope', sans-serif !important; }
@@ -255,10 +275,61 @@ CUSTOM_CSS = """
     .badge-stable { background:rgba(61,220,155,.1); color:#68e6b2; border:1px solid rgba(61,220,155,.28); }
     .badge-unstable { background:rgba(255,131,142,.10); color:#ff9ba6; border:1px solid rgba(255,131,142,.28); }
     [data-testid="stPlotlyChart"] { border:1px solid var(--line); border-radius:18px; overflow:hidden; background:#080d1e; box-shadow:0 18px 50px rgba(0,0,0,.18); }
+    [data-testid="stPlotlyChart"], [data-testid="stPlotlyChart"] > div { width:100% !important; max-width:100% !important; min-width:0 !important; }
+    [data-testid="stRadio"] div[role="radiogroup"] { flex-wrap:wrap; row-gap:.35rem; }
     hr { border-color:var(--line) !important; margin:1.6rem 0 !important; }
-    @media (max-width: 800px) { .block-container { padding:1.25rem 1rem 2rem; } .hero { min-height:145px; padding:1.5rem; } .hero__status { position:relative; top:auto; right:auto; margin-top:1rem; } }
     [data-testid="stSidebarContent"] { padding-top: 1.5rem !important; }
-    [data-testid="stSidebarHeader"] { padding-top: 0 !important; display: none !important; }
+    [data-testid="stSidebarHeader"] { padding-top:env(safe-area-inset-top) !important; }
+
+    @media (max-width: 900px) {
+        [data-testid="stHeader"] { height:3.25rem; }
+        [data-testid="stSidebar"] { width:min(92vw, 21rem) !important; min-width:0 !important; max-width:100vw !important; }
+        [data-testid="stSidebar"] > div:first-child { width:100% !important; }
+        .block-container {
+            max-width:100%;
+            padding:1rem max(1rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+        }
+        .hero { min-height:0; padding:1.35rem; border-radius:17px; }
+        .hero:after { width:230px; height:230px; right:-110px; top:-135px; }
+        .hero__title { max-width:100%; font-size:clamp(2rem, 8vw, 2.8rem); letter-spacing:-.055em; overflow-wrap:anywhere; }
+        .hero__copy { max-width:100%; font-size:.86rem; }
+        .hero__status { position:relative; top:auto; right:auto; margin-top:1rem; }
+        .field-cue { flex-direction:column; align-items:flex-start; gap:.65rem; }
+        .field-cue__legend { width:100%; justify-content:flex-start; gap:.55rem .85rem; }
+        .section-head { align-items:flex-start; flex-wrap:wrap; gap:.35rem 1rem; }
+        [data-testid="stDialog"] {
+            width:calc(100vw - 1rem) !important;
+            max-width:calc(100vw - 1rem) !important;
+            max-height:calc(100dvh - 1rem) !important;
+            margin:.5rem auto !important;
+            border-radius:14px !important;
+        }
+        [data-testid="stDialog"] video { max-height:60dvh !important; }
+        [data-testid="stMain"] [data-testid="stHorizontalBlock"] { flex-wrap:wrap !important; }
+        [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+            flex:1 1 calc(50% - .75rem) !important;
+            width:auto !important;
+        }
+        [data-testid="stMain"] [data-testid="stMetricValue"] { white-space:normal; overflow-wrap:anywhere; }
+    }
+
+    @media (max-width: 600px) {
+        .loader-container { width:108px; height:108px; margin-bottom:1.8rem; }
+        #splash-screen h1 { font-size:clamp(2rem, 13vw, 3rem); letter-spacing:.16em; }
+        #splash-screen p { font-size:.75rem; line-height:1.6; letter-spacing:.12em; }
+        .loading-bar-container { width:min(250px, 78vw); }
+        .block-container { padding-top:.75rem; }
+        .hero { padding:1.15rem; }
+        .hero__title { font-size:clamp(1.8rem, 10vw, 2.35rem); }
+        .hero__copy { line-height:1.5; }
+        .section-head__detail { width:100%; }
+        .field-cue { padding:.72rem; }
+        .field-cue__legend > div { flex:1 1 8rem; }
+        [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="column"] { flex-basis:100% !important; }
+        [data-testid="stMain"] .stButton > button { width:100%; }
+        [data-testid="stPlotlyChart"] { border-radius:13px; }
+        [data-testid="stMetric"] { padding:.55rem .2rem; }
+    }
 </style>
 """
 st.html(CUSTOM_CSS)
@@ -339,7 +410,7 @@ with st.sidebar.container(border=True):
         if st.button(
             "↺",
             key="reset_sys",
-            use_container_width=True,
+            width="stretch",
             help="Reset system to Earth–Moon",
         ):
             st.session_state.body1 = "Earth"
@@ -417,7 +488,7 @@ if mu is not None:
             if st.button(
                 "↺",
                 key="reset_probe",
-                use_container_width=True,
+                width="stretch",
                 help="Recenter probe and zero the perturbations",
             ):
                 st.session_state.perturb_radial = 0.0
@@ -542,7 +613,7 @@ if mu is not None:
         </div>
         """)
     with col_btn:
-        if st.button("Export Video", use_container_width=True):
+        if st.button("Export Video", width="stretch"):
             export_video_dialog(
                 mu,
                 st.session_state.trajectory,
@@ -596,7 +667,12 @@ if mu is not None:
     )
 
     event = st.plotly_chart(
-        fig, key="orbital_map", on_select="rerun", selection_mode="points"
+        fig,
+        key="orbital_map",
+        on_select="rerun",
+        selection_mode="points",
+        width="stretch",
+        config={"responsive": True, "displaylogo": False},
     )
     if event and event["selection"] and event["selection"]["points"]:
         pt = event["selection"]["points"][0]
