@@ -2,7 +2,6 @@ venv/
 __pycache__/
 .git/
 .github/
-.streamlit/
 .streamlit-home/
 .ruff_cache/
 manim_media/
