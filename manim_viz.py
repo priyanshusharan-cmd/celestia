@@ -54,7 +54,7 @@ class OrbitalScene(Scene):
                     color=np.random.choice(star_colors),
                     fill_opacity=np.random.uniform(0.1, 0.9),
                 )
-                for _ in range(140)
+                for _ in range(40)
             ]
         )
         self.add(stars)
@@ -77,7 +77,7 @@ class OrbitalScene(Scene):
         def create_glowing_body(radius, color, glow_color):
             body = VGroup()
             # Glow layers
-            for i in range(4, 0, -1):
+            for i in range(2, 0, -1):
                 glow = Circle(
                     radius=radius + i * 0.12,
                     color=glow_color,
@@ -169,8 +169,8 @@ class OrbitalScene(Scene):
 
         self.add(inertial_trace)
 
-        self.play(tracker.animate.set_value(1), run_time=4.0, rate_func=linear)
-        self.wait(0.4)
+        self.play(tracker.animate.set_value(1), run_time=2.0, rate_func=linear)
+        self.wait(0.1)
 
 
 def render_trajectory(
@@ -181,8 +181,8 @@ def render_trajectory(
         raise ValueError("Trajectory must contain at least two x/y positions.")
     if len(trajectory) > 10_000 or not np.all(np.isfinite(trajectory)):
         raise ValueError("Trajectory is too large or contains invalid values.")
-    if len(trajectory) > 320:
-        sample_indices = np.linspace(0, len(trajectory) - 1, 320, dtype=int)
+    if len(trajectory) > 120:
+        sample_indices = np.linspace(0, len(trajectory) - 1, 120, dtype=int)
         trajectory = trajectory[sample_indices]
 
     safe_stem = re.sub(r"[^A-Za-z0-9_-]+", "-", Path(output_file).stem).strip("-")
@@ -200,9 +200,12 @@ def render_trajectory(
                     "media_dir": str(media_dir),
                     "output_file": unique_output,
                     "format": "mp4",
-                    "pixel_width": 854,
-                    "pixel_height": 480,
-                    "frame_rate": 24,
+                    # Hosted instances have limited CPU. Twenty-five frames at
+                    # 640x360 retain a useful cinematic preview without tying
+                    # up the Streamlit session for several minutes.
+                    "pixel_width": 640,
+                    "pixel_height": 360,
+                    "frame_rate": 12,
                     "verbosity": "ERROR",
                     "disable_caching": True,
                 }
