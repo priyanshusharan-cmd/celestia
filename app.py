@@ -19,9 +19,80 @@ st.set_page_config(
     layout="wide",
     page_title="Celestia · Orbital Lab",
     page_icon="✦",
-    # Start with the workspace unobstructed on phones and tablets. Mission
-    # controls remain one tap away via Streamlit's visible sidebar button.
+    # Keep the workspace unobstructed until the user opens mission controls.
     initial_sidebar_state="collapsed",
+)
+
+# Phones should show the same wide workspace as desktop instead of asking
+# Streamlit to squeeze every control into a narrow single-column layout. The
+# explicit viewport scale fits that canvas on first load while preserving
+# normal pinch-to-zoom and browser zoom controls. This script contains no
+# dynamic or user-provided content.
+st.html(
+    """
+    <script>
+    (() => {
+        const desktopWidth = 1180;
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (!viewport) return;
+
+        const applyViewport = () => {
+            const deviceWidth = Math.min(window.screen.width, window.screen.height);
+            if (deviceWidth <= 900) {
+                const fitScale = Math.max(0.2, Math.min(1, deviceWidth / desktopWidth));
+                viewport.setAttribute(
+                    "content",
+                    `width=${desktopWidth}, initial-scale=${fitScale}, minimum-scale=0.2, maximum-scale=5, user-scalable=yes`
+                );
+                document.documentElement.dataset.celestiaDesktopViewport = "true";
+            } else {
+                viewport.setAttribute(
+                    "content",
+                    "width=device-width, initial-scale=1, minimum-scale=0.2, maximum-scale=5, user-scalable=yes"
+                );
+                delete document.documentElement.dataset.celestiaDesktopViewport;
+            }
+        };
+
+        applyViewport();
+        window.addEventListener("orientationchange", applyViewport, { passive: true });
+
+        // Streamlit's collapsed-sidebar arrow can be extremely small or absent
+        // in mobile browsers. Keep an independent touch target in front of it
+        // and forward taps to Streamlit's native sidebar control.
+        let controlsButton = document.getElementById("celestia-mobile-controls");
+        if (!controlsButton) {
+            controlsButton = document.createElement("button");
+            controlsButton.id = "celestia-mobile-controls";
+            controlsButton.type = "button";
+            controlsButton.textContent = "»  Mission controls";
+            controlsButton.setAttribute("aria-label", "Open mission controls");
+            controlsButton.addEventListener("click", () => {
+                document.querySelector('[data-testid="stExpandSidebarButton"]')?.click();
+            });
+            document.body.appendChild(controlsButton);
+        }
+
+        const syncControlsButton = () => {
+            const isPhoneOrTablet = Math.min(window.screen.width, window.screen.height) <= 900;
+            const sidebarIsCollapsed = Boolean(
+                document.querySelector('[data-testid="stExpandSidebarButton"]')
+            );
+            controlsButton.hidden = !(isPhoneOrTablet && sidebarIsCollapsed);
+        };
+
+        syncControlsButton();
+        if (!window.__celestiaControlsObserver) {
+            window.__celestiaControlsObserver = new MutationObserver(syncControlsButton);
+            window.__celestiaControlsObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+            });
+        }
+    })();
+    </script>
+    """,
+    unsafe_allow_javascript=True,
 )
 
 
@@ -265,6 +336,32 @@ CUSTOM_CSS = """
         border:1px solid rgba(114,230,222,.28) !important;
         border-radius:12px !important;
     }
+    #celestia-mobile-controls {
+        position:fixed;
+        top:max(1.1rem, env(safe-area-inset-top));
+        left:max(1.1rem, env(safe-area-inset-left));
+        z-index:1000000;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-width:16rem;
+        min-height:6rem;
+        padding:1rem 1.5rem;
+        color:#eaf0ff;
+        background:rgba(13,24,52,.97);
+        border:2px solid rgba(114,230,222,.55);
+        border-radius:1.25rem;
+        box-shadow:0 12px 36px rgba(0,0,0,.48);
+        font-family:'Manrope',sans-serif;
+        font-size:1.45rem;
+        font-weight:800;
+        letter-spacing:.01em;
+        cursor:pointer;
+        -webkit-tap-highlight-color:transparent;
+        touch-action:manipulation;
+    }
+    #celestia-mobile-controls[hidden] { display:none !important; }
+    #celestia-mobile-controls:active { transform:scale(.97); }
     
     [data-testid="stAppViewContainer"] > .main { padding-top: 0; }
     .stApp:before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.28; background-image:linear-gradient(rgba(144,165,255,.035) 1px, transparent 1px),linear-gradient(90deg, rgba(144,165,255,.035) 1px, transparent 1px); background-size:42px 42px; mask-image:linear-gradient(to bottom, black, transparent 75%); }
@@ -337,86 +434,20 @@ CUSTOM_CSS = """
     [data-testid="stSidebarContent"] { padding-top: 1.5rem !important; }
     [data-testid="stSidebarHeader"] { padding-top:env(safe-area-inset-top) !important; }
 
+    /* CSS fallback for browsers that delay applying the viewport script. It
+       keeps the desktop canvas intact and lets the page pan horizontally. */
     @media (max-width: 900px) {
-        [data-testid="stHeader"] { height:3.25rem; }
-        [data-testid="stExpandSidebarButton"] {
-            position:fixed !important;
-            top:max(.65rem, env(safe-area-inset-top)) !important;
-            left:max(.65rem, env(safe-area-inset-left)) !important;
-            z-index:999990 !important;
-            width:auto !important;
-            padding:0 .85rem !important;
-            display:inline-flex !important;
-            align-items:center !important;
-            gap:.45rem !important;
-            box-shadow:0 8px 24px rgba(0,0,0,.32) !important;
+        html, body, .stApp, [data-testid="stAppViewContainer"] {
+            min-width:1180px !important;
+            max-width:none !important;
+            overflow-x:auto !important;
         }
-        [data-testid="stExpandSidebarButton"]::after {
-            content:"Mission controls";
-            color:var(--ink);
-            font-family:'Manrope',sans-serif;
-            font-size:.72rem;
-            font-weight:700;
-            letter-spacing:.02em;
-            white-space:nowrap;
+        [data-testid="stMain"] { min-width:1180px !important; }
+        [data-testid="stMainBlockContainer"], .block-container {
+            min-width:1080px !important;
+            max-width:1560px !important;
+            padding:2.2rem 2.65rem 2.8rem !important;
         }
-        [data-testid="stSidebarCollapseButton"] button {
-            position:relative;
-            z-index:2;
-        }
-        [data-testid="stSidebar"] {
-            min-width:0 !important;
-            max-width:min(92vw, 21rem) !important;
-            /* Keep the tablet canvas full width; the sidebar overlays it when open. */
-            margin-right:calc(-1 * min(300px, 92vw)) !important;
-        }
-        [data-testid="stSidebar"] > div:first-child { width:100% !important; }
-        .block-container {
-            max-width:100%;
-            padding:1rem max(1rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
-        }
-        .hero { min-height:0; padding:1.35rem; border-radius:17px; }
-        .hero:after { width:230px; height:230px; right:-110px; top:-135px; }
-        .hero__title { max-width:100%; font-size:clamp(2rem, 8vw, 2.8rem); letter-spacing:-.055em; overflow-wrap:anywhere; }
-        .hero__copy { max-width:100%; font-size:.86rem; }
-        .hero__status { position:relative; top:auto; right:auto; margin-top:1rem; }
-        .field-cue { flex-direction:column; align-items:flex-start; gap:.65rem; }
-        .field-cue__legend { width:100%; justify-content:flex-start; gap:.55rem .85rem; }
-        .section-head { align-items:flex-start; flex-wrap:wrap; gap:.35rem 1rem; }
-        [data-testid="stDialog"] {
-            width:calc(100vw - 1rem) !important;
-            max-width:calc(100vw - 1rem) !important;
-            max-height:calc(100dvh - 1rem) !important;
-            margin:.5rem auto !important;
-            border-radius:14px !important;
-        }
-        [data-testid="stDialog"] video { max-height:60dvh !important; }
-        [data-testid="stMain"] [data-testid="stHorizontalBlock"] { flex-wrap:wrap !important; }
-        [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-            flex:1 1 calc(50% - .75rem) !important;
-            width:auto !important;
-            max-width:100% !important;
-        }
-        [data-testid="stMain"] [data-testid="stMetricValue"] { white-space:normal; overflow-wrap:anywhere; }
-    }
-
-    @media (max-width: 600px) {
-        .loader-container { width:108px; height:108px; margin-bottom:1.8rem; }
-        #splash-screen h1 { font-size:clamp(2rem, 13vw, 3rem); letter-spacing:.16em; }
-        #splash-screen p { font-size:.75rem; line-height:1.6; letter-spacing:.12em; }
-        .loading-bar-container { width:min(250px, 78vw); }
-        .block-container { padding-top:.75rem; }
-        .hero { padding:1.15rem; }
-        .hero__title { font-size:clamp(1.8rem, 10vw, 2.35rem); }
-        .hero__copy { line-height:1.5; }
-        .section-head__detail { width:100%; }
-        .field-cue { padding:.72rem; }
-        .field-cue__legend > div { flex:1 1 8rem; }
-        [data-testid="stMain"] [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { flex-basis:100% !important; }
-        [data-testid="stMain"] .stButton > button { width:100%; }
-        [data-testid="stPlotlyChart"] { border-radius:13px; }
-        [data-testid="stPlotlyChart"] .modebar { display:none !important; }
-        [data-testid="stMetric"] { padding:.55rem .2rem; }
     }
 </style>
 """
