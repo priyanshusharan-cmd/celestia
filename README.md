@@ -1,909 +1,408 @@
 <div align="center">
 
-<img src="./logo.png" alt="Celestia Logo" width="200"/>
+<a href="https://celestia-website.onrender.com">
+  <img src="./assets/readme/hero.svg" alt="Celestia — Orbital Dynamics Laboratory" width="100%"/>
+</a>
 
-## Celestia - Orbital Dynamics Laboratory
+<br/>
 
-**Cosmic Code Hackathon 2026 · BMS College of Engineering**
+<a href="https://celestia-website.onrender.com"><img src="https://img.shields.io/badge/Launch_the_Lab-Live-72E6DE?style=for-the-badge&labelColor=0B1838&logo=render&logoColor=72E6DE" alt="Launch the lab"/></a>
+<a href="https://github.com/priyanshusharan-cmd/celestia/releases/latest"><img src="https://img.shields.io/github/v/release/priyanshusharan-cmd/celestia?style=for-the-badge&labelColor=0B1838&color=F5B841&logo=github&logoColor=F5B841&label=Desktop%20App" alt="Latest release"/></a>
+<a href="https://github.com/priyanshusharan-cmd/celestia/actions/workflows/container-check.yml"><img src="https://img.shields.io/github/actions/workflow/status/priyanshusharan-cmd/celestia/container-check.yml?branch=main&style=for-the-badge&labelColor=0B1838&color=4C8DFF&logo=docker&logoColor=4C8DFF&label=Container" alt="Container check"/></a>
+<a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-EAF0FF?style=for-the-badge&labelColor=0B1838" alt="MIT License"/></a>
 
-<br>
+<img src="https://img.shields.io/badge/Python-3.11-EAF0FF?style=flat-square&labelColor=0B1838&logo=python&logoColor=EAF0FF" alt="Python 3.11"/>
+<img src="https://img.shields.io/badge/Streamlit-1.64-EAF0FF?style=flat-square&labelColor=0B1838&logo=streamlit&logoColor=FF4B4B" alt="Streamlit"/>
+<img src="https://img.shields.io/badge/REBOUND-IAS15-EAF0FF?style=flat-square&labelColor=0B1838" alt="REBOUND IAS15"/>
+<img src="https://img.shields.io/badge/NumPy-SciPy-EAF0FF?style=flat-square&labelColor=0B1838&logo=numpy&logoColor=4DABCF" alt="NumPy and SciPy"/>
+<img src="https://img.shields.io/badge/Plotly-2D_%2B_3D-EAF0FF?style=flat-square&labelColor=0B1838&logo=plotly&logoColor=EAF0FF" alt="Plotly"/>
+<img src="https://img.shields.io/badge/Manim-Cinematic-EAF0FF?style=flat-square&labelColor=0B1838" alt="Manim"/>
 
-
-<img src="https://img.shields.io/badge/CR3BP-Simulation-72E6DE?style=for-the-badge" alt="CR3BP"/>
-&nbsp;
-<img src="https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
-&nbsp;
-<img src="https://img.shields.io/badge/REBOUND-IAS15-FFB703?style=for-the-badge" alt="REBOUND IAS15"/>
-
-<br><br>
-
-> **Explore. Perturb. Simulate. Understand.**
->
-> Celestia is an interactive orbital dynamics laboratory for studying the
-> **Circular Restricted Three-Body Problem (CR3BP)**, Lagrange-point equilibria,
-> orbital stability, perturbation response, and rotating-frame dynamics.
+<h3>
+  <a href="https://celestia-website.onrender.com">Live Lab</a>
+  <span>&nbsp;·&nbsp;</span>
+  <a href="#demo">Demo</a>
+  <span>&nbsp;·&nbsp;</span>
+  <a href="#architecture">Architecture</a>
+  <span>&nbsp;·&nbsp;</span>
+  <a href="#physics">Physics</a>
+  <span>&nbsp;·&nbsp;</span>
+  <a href="#quick-start">Quick Start</a>
+  <span>&nbsp;·&nbsp;</span>
+  <a href="https://github.com/priyanshusharan-cmd/celestia/releases/latest">Download</a>
+</h3>
 
 </div>
 
----
+<br/>
+
+<table>
+<tr>
+<td>
+
+**Celestia** is an interactive orbital dynamics laboratory for the **Circular Restricted Three-Body Problem (CR3BP)**.
+Pick two bodies, solve for all five Lagrange points, nudge a satellite off its equilibrium,
+and watch a high-accuracy **REBOUND / IAS15** integration show you whether it stays or escapes,
+in the rotating frame, with live telemetry, and as a cinematic MP4.
+
+</td>
+</tr>
+</table>
+
+<div align="center">
+
+> Most demos stop at *"Where are the Lagrange points?"*<br/>
+> **Celestia asks: "What happens when we disturb a satellite at one of them?"**
+
+</div>
+
+<img src="./assets/readme/divider.svg" width="100%" alt=""/>
+
+<a id="demo"></a>
 
 ## 🎥 Demonstration
 
-<br>
-
 <div align="center">
-  <video src="https://github.com/user-attachments/assets/5e6ecf11-f7f7-44ba-a35e-475ac50cb04f" width="85%" controls autoplay loop muted style="border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);"></video>
+  <video src="https://github.com/user-attachments/assets/5e6ecf11-f7f7-44ba-a35e-475ac50cb04f" width="90%" controls autoplay loop muted></video>
+  <br/>
+  <sub>System configuration → numerical simulation → rotating-frame view → telemetry → cinematic render</sub>
 </div>
 
-<br>
+<img src="./assets/readme/divider.svg" width="100%" alt=""/>
+
+## ✨ What it does
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### 🪐 Configure
+Choose any pair from a built-in catalogue (Sun to Pluto) or place **custom bodies** directly on the orbital map. The mass ratio `μ` is derived live.
+
+</td>
+<td width="33%" valign="top">
+
+### 📍 Solve
+All five **Lagrange points** are computed for your `μ`: root-finding for L1–L3 and the exact equilateral solution for L4/L5.
+
+</td>
+<td width="33%" valign="top">
+
+### 🧭 Classify
+Each equilibrium is **linearised** and its eigenvalues decide the verdict. Nothing is hard-coded as "stable".
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+### 🚀 Perturb
+Push the satellite **in/out**, **sideways**, or trim its **velocity**, then integrate with REBOUND's adaptive **IAS15**.
+
+</td>
+<td width="33%" valign="top">
+
+### 🌌 Visualise
+Explore the 2D orbital plane, a 3D **effective-potential terrain**, and a cinematic Plotly orbit with playback.
+
+</td>
+<td width="33%" valign="top">
+
+### 🎬 Export
+Render the same trajectory as a **Manim** animation and download it as an MP4.
+
+</td>
+</tr>
+</table>
+
+<img src="./assets/readme/divider.svg" width="100%" alt=""/>
+
+<a id="architecture"></a>
+
+## 🛰️ Architecture
 
 <div align="center">
-
-**Celestia in action — from system configuration to numerical simulation, rotating-frame visualization, telemetry, and cinematic rendering.**
-
+  <img src="./assets/readme/architecture.svg" alt="Celestia architecture diagram" width="100%"/>
 </div>
 
----
+<br/>
 
-## 🌌 What is Celestia?
+Every view is generated from the **same numerical trajectory**: the cinematic render and the scientific plot never disagree.
 
-**Celestia** is an interactive numerical laboratory designed to make the mathematics and dynamics of the **Circular Restricted Three-Body Problem** tangible.
+| Module | Role | Key pieces |
+| :-- | :-- | :-- |
+| [`app.py`](./app.py) | Streamlit mission control: inputs, state, telemetry, video export | body catalogue, cached trajectory, export dialog |
+| [`physics.py`](./physics.py) | CR3BP mathematics | `mass_ratio`, `all_lagrange_points`, `stability`, `jacobi_constant` |
+| [`rebound_sim.py`](./rebound_sim.py) | Numerical dynamics | `build_simulation`, `add_satellite`, `run_and_record` (IAS15, escape guard) |
+| [`frames.py`](./frames.py) | Reference frames | `to_rotating_frame`, vectorised inertial → rotating rotation |
+| [`viz.py`](./viz.py) | Interactive Plotly figures | `system_figure`, `potential_terrain_figure`, `cinematic_orbit_figure` |
+| [`manim_viz.py`](./manim_viz.py) | Cinematic pipeline | `OrbitalScene`, `render_trajectory` → MP4 |
 
-Instead of simply displaying precomputed Lagrange points, Celestia allows the user to:
+<img src="./assets/readme/divider.svg" width="100%" alt=""/>
 
-* configure two gravitationally interacting primary bodies;
-* calculate the corresponding mass ratio `μ`;
-* dynamically solve for all five Lagrange points;
-* inspect the effective gravitational potential;
-* select an equilibrium point;
-* deliberately perturb a test satellite;
-* numerically integrate its subsequent motion;
-* transform the resulting trajectory into the rotating reference frame;
-* analyze the stability of the selected equilibrium;
-* inspect telemetry such as deviation, Jacobi constant, mass ratio, and orbital period;
-* and finally render the simulation as a cinematic orbital animation.
+<a id="physics"></a>
 
-The result is a complete pipeline:
+## 🔭 The Physics
 
-```text
-        MASSIVE BODIES
-              │
-              ▼
-        Mass Ratio μ
-              │
-              ▼
-      Lagrange Point Solver
-              │
-       ┌──────┴──────┐
-       ▼             ▼
-   Equilibrium    Potential
-     Geometry      Landscape
-       │
-       ▼
-  Satellite Placement
-       │
-       ▼
-  Position / Velocity
-     Perturbation
-       │
-       ▼
-   REBOUND + IAS15
-       │
-       ▼
- Inertial Trajectory
-       │
-       ▼
- Rotating-Frame Transform
-       │
-       ├───────────────┐
-       ▼               ▼
- Stability         Visualization
- Analysis          + Telemetry
-       │               │
-       └───────┬───────┘
-               ▼
-        Cinematic Export
-             Manim
+Celestia models two primaries `m₁`, `m₂` in circular orbit around their barycentre, plus a **massless** satellite that feels both but moves neither.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**Mass ratio and geometry**
+
+```math
+\mu = \frac{m_2}{m_1 + m_2}, \qquad x_1 = -\mu, \qquad x_2 = 1-\mu
 ```
 
----
+**Effective potential (rotating frame)**
 
-# ✨ Why Celestia?
-
-Most educational demonstrations of Lagrange points stop at showing five markers around two bodies.
-
-Celestia goes further.
-
-It combines **analytical orbital mechanics**, **numerical root finding**, **high-accuracy N-body integration**, **linear stability analysis**, **reference-frame transformations**, and **interactive scientific visualization** into one environment.
-
-The central question is not:
-
-> *"Where are the Lagrange points?"*
-
-It is:
-
-> **"What happens when we disturb a satellite from one of them?"**
-
-That distinction is the foundation of the project.
-
----
-
-# 🔭 Core Scientific Model
-
-Celestia uses the **Circular Restricted Three-Body Problem (CR3BP)**.
-
-The system consists of:
-
-1. A primary body with mass `m₁`
-2. A secondary body with mass `m₂`
-3. A massless satellite / test particle
-
-The satellite experiences the gravitational influence of both primary bodies, while its own mass is assumed negligible.
-
-The two primaries orbit their common barycenter.
-
----
-
-## 1. Normalized Mass Ratio
-
-The system is parameterized by:
-
-$$ \mu = \frac{m_2}{m_1+m_2} $$
-
-where:
-
-* `m₁` = primary mass
-* `m₂` = secondary mass
-* `μ` = normalized mass ratio
-
-Celestia calculates this dynamically from the selected bodies.
-
-In normalized CR3BP coordinates, the barycenter is placed at the origin and the primaries are positioned at:
-
-$$ x_1=-\mu $$
-
-$$ x_2=1-\mu $$
-
-This coordinate system is used throughout the Lagrange-point calculations.
-
----
-
-# 🛰️ Lagrange Point Solver
-
-Celestia calculates all five classical equilibrium points dynamically, combining numerical root-finding with analytical geometry.
-
-### 📍 The Collinear Points (L1, L2, L3)
-The three collinear points lie along the axis connecting the two primary bodies. They are found by solving the nonlinear equilibrium equation:
-
-$$ x - (1-\mu)\frac{x+\mu}{|x+\mu|^3} - \mu\frac{x-1+\mu}{|x-1+\mu|^3} = 0 $$
-
-We utilize `scipy.optimize.brentq` for robust bracketed root solving (with a Newton-method fallback) to locate these points:
-- **L1**: Between the two primary bodies.
-- **L2**: Beyond the secondary body.
-- **L3**: Beyond the primary body on the opposite side.
-
----
-
-### 🔺 The Triangular Points (L4, L5)
-The L4 and L5 points have an elegant, analytical closed-form solution. They form equilateral triangles with the primary bodies:
-
-$$ L_{4,5} = \left(\frac{1}{2}-\mu, \pm\frac{\sqrt{3}}{2}\right) $$
-
----
-
-# ⚖️ Effective Potential
-
-Celestia also calculates the effective potential in the rotating frame:
-
-$$ \Omega(x,y) = \frac{1-\mu}{r_1} + \frac{\mu}{r_2} + \frac{x^2+y^2}{2} $$
-
-where:
-
-$$ r_1=\sqrt{(x+\mu)^2+y^2} $$
-
-and
-
-$$ r_2=\sqrt{(x-1+\mu)^2+y^2} $$
-
-The effective potential is used to generate the interactive **3D Potential Terrain** visualization.
-
-This provides a geometric interpretation of the gravitational and centrifugal structure of the rotating frame.
-
----
-
-# 🧭 Stability Analysis
-
-Celestia does not simply hard-code the stability labels.
-
-The selected equilibrium point is locally linearized.
-
-The Hessian of the effective potential is estimated numerically:
-
-$$ \Omega_{xx},\quad \Omega_{yy},\quad \Omega_{xy} $$
-
-using central finite differences.
-
-These derivatives are then used to construct the linearized rotating-frame system:
-
-$$ A= \begin{bmatrix} 0&0&1&0\\ 0&0&0&1\\ \Omega_{xx}&\Omega_{xy}&0&2\\ \Omega_{xy}&\Omega_{yy}&-2&0 \end{bmatrix} $$
-
-Celestia calculates the eigenvalues of this matrix.
-
-The equilibrium is classified according to the real parts of those eigenvalues:
-
-```text
-positive real eigenvalue
-        ↓
-     unstable
-
-no positive real component
-        ↓
-      stable
+```math
+\Omega(x,y) = \frac{1-\mu}{r_1} + \frac{\mu}{r_2} + \frac{x^2+y^2}{2}
 ```
 
-This allows the application to distinguish stable and unstable equilibrium behavior using the local dynamics of the system rather than purely visual rules.
+</td>
+<td width="50%" valign="top">
 
----
+**Triangular points (exact)**
 
-# 🚀 Perturbation Laboratory
-
-This is the central interactive experiment in Celestia.
-
-After selecting a Lagrange point, the satellite can be displaced using three independent controls:
-
-### Position
-
-**Radial perturbation**
-
-Moves the satellite toward or away from the equilibrium region.
-
-**Tangential perturbation**
-
-Moves the satellite sideways relative to the selected point.
-
-### Velocity
-
-**Velocity perturbation**
-
-Adds an additional velocity component to the satellite's initial state.
-
-The resulting state becomes:
-
-```text
-Ideal equilibrium state
-        +
-position perturbation
-        +
-velocity perturbation
-        ↓
-Numerical initial conditions
-        ↓
-Orbital evolution
+```math
+L_{4,5} = \left(\tfrac{1}{2}-\mu,\ \pm\tfrac{\sqrt{3}}{2}\right)
 ```
 
-This allows users to experimentally observe the difference between an equilibrium configuration and a perturbed trajectory.
+**Jacobi constant**
 
----
+```math
+C = 2\,\Omega(x,y) - \left(v_x^2 + v_y^2\right)
+```
 
-# 🧮 Numerical Integration
+</td>
+</tr>
+</table>
 
-The actual orbital evolution is performed using **REBOUND**.
+<details>
+<summary><b>📍 Collinear points L1, L2, L3</b></summary>
 
-Celestia creates a normalized gravitational simulation with:
+<br/>
+
+The collinear points are roots of the equilibrium condition on the x-axis:
+
+```math
+x - (1-\mu)\frac{x+\mu}{|x+\mu|^3} - \mu\frac{x-1+\mu}{|x-1+\mu|^3} = 0
+```
+
+`physics.py` brackets each root and solves it with `scipy.optimize.brentq`, falling back to Newton's method:
+
+- **L1** lies between the two primaries
+- **L2** lies beyond the secondary
+- **L3** lies beyond the primary, on the far side
+
+with $r_1=\sqrt{(x+\mu)^2+y^2}$ and $r_2=\sqrt{(x-1+\mu)^2+y^2}$.
+
+</details>
+
+<details>
+<summary><b>🧭 Linear stability analysis</b></summary>
+
+<br/>
+
+The Hessian of $\Omega$ at the chosen point ($\Omega_{xx}$, $\Omega_{yy}$, $\Omega_{xy}$) is estimated with central finite differences and placed in the linearised rotating-frame system:
+
+```math
+A = \begin{bmatrix} 0&0&1&0\\ 0&0&0&1\\ \Omega_{xx}&\Omega_{xy}&0&2\\ \Omega_{xy}&\Omega_{yy}&-2&0 \end{bmatrix}
+```
+
+If any eigenvalue of $A$ has a positive real part, the point is **unstable**; otherwise it is **stable**.
+For Earth–Moon (`μ ≈ 0.01215`) that yields L1–L3 unstable and L4/L5 stable. The animated banner above shows exactly this: a real tadpole libration around L4 and a real departure from L1.
+
+</details>
+
+<details>
+<summary><b>🧮 Numerical integration with REBOUND / IAS15</b></summary>
+
+<br/>
 
 ```python
-sim.G = 1.0
+sim = rebound.Simulation()
+sim.G = physics.GRAVITATIONAL_CONSTANT   # 4π² / 332 946  →  AU³ / (M⊕ · yr²)
 sim.integrator = "ias15"
 ```
 
-The two primary bodies are initialized in circular motion around their barycenter.
+The primaries start on circular orbits about the barycentre and the satellite is added with `m = 0.0`, exactly as the restricted problem requires.
+Units are **AU, Earth masses and years**, so the Earth–Sun period comes out as one year (covered by the test suite).
+**IAS15** is adaptive and accurate to machine precision, which matters when the whole experiment is about the response to *small* changes in the initial state.
+Integration stops early if the satellite leaves the map (`escape_radius`).
 
-The satellite is inserted as a:
-
-```python
-m = 0.0
-```
-
-massless test particle.
-
-This is consistent with the restricted three-body approximation: the satellite responds to the gravitational field but does not modify the motion of the two primary bodies.
-
----
-
-# 🎯 Why IAS15?
-
-Celestia uses REBOUND's **IAS15** integrator.
-
-IAS15 is a high-accuracy adaptive integrator designed for gravitational dynamics.
-
-This is particularly useful for Celestia because the application is not merely trying to produce visually plausible trajectories.
-
-It is investigating the response of a satellite to small changes in its initial state.
-
-Numerical accuracy therefore matters.
-
----
-
-# 🔄 Inertial Frame → Rotating Frame
-
-REBOUND evolves the system in an inertial reference frame.
-
-However, Lagrange points are stationary only when viewed from the rotating frame of the two-body system.
-
-Celestia therefore transforms the numerical trajectory.
-
-For:
-
-$$ \theta=\omega t $$
-
-the rotating-frame coordinates are:
-
-$$ x_r=x\cos\theta+y\sin\theta $$
-
-$$ y_r=-x\sin\theta+y\cos\theta $$
-
-This transformation is implemented in `frames.py` using vectorized NumPy operations.
-
-The result is a trajectory that can be interpreted relative to the moving primary bodies and their equilibrium points.
-
----
-
-# 📊 Telemetry
-
-Once a simulation has been generated, Celestia exposes numerical telemetry including:
-
-| Metric                | Meaning                                                                  |
-| --------------------- | ------------------------------------------------------------------------ |
-| **Maximum Deviation** | Largest displacement of the simulated trajectory from its starting point |
-| **Jacobi Constant**   | Rotating-frame conserved quantity used to characterize the trajectory    |
-| **Mass Ratio μ**      | Normalized secondary-to-total mass ratio                                 |
-| **Orbital Period**    | Characteristic orbital period calculated from the system parameters      |
-
-The Jacobi constant is calculated as:
-
-$$ C=2\Omega(x,y)-(v_x^2+v_y^2) $$
-
-This provides an additional dynamical quantity alongside the visual trajectory.
-
----
-
-# 🌌 Visualization System
-
-Celestia provides multiple visualization modes.
-
-## 2D Orbital Plane
-
-The primary scientific view.
-
-It displays:
-
-* primary bodies;
-* barycentric geometry;
-* L1–L5;
-* L4/L5 triangular geometry;
-* satellite trajectory;
-* rotating-frame motion;
-* interactive map selection;
-* animated trajectory playback.
-
----
-
-## 3D Potential Terrain
-
-The effective potential is sampled over a spatial grid and rendered as an interactive 3D surface.
-
-This gives the user a visual representation of the underlying rotating-frame potential field.
-
-It is particularly useful for understanding why equilibrium points exist and how the gravitational landscape changes around the system.
-
----
-
-## Cinematic Orbit
-
-The cinematic visualization presents the same numerical simulation as a polished orbital animation.
-
-It includes:
-
-* rotating primary bodies;
-* Lagrange points;
-* orbital paths;
-* satellite motion;
-* trajectory history;
-* starfield;
-* dynamic labels;
-* playback controls.
-
-The visualization is generated with Plotly and animated through frame updates.
-
----
-
-# 🎬 Cinematic Video Rendering
-
-Celestia also contains a dedicated **Manim rendering pipeline**.
-
-The trajectory generated by the numerical simulation can be passed into `manim_viz.py`.
-
-The renderer creates:
-
-* a deep-space environment;
-* dynamically scaled primary bodies;
-* glowing orbital objects;
-* body labels;
-* a live satellite probe;
-* rotating-frame motion;
-* trajectory traces;
-* an inertial trail;
-* smooth animation.
-
-The final output is rendered as an MP4 animation.
-
-This creates a separation between:
-
-```text
-Scientific computation
-        ↓
-Numerical trajectory
-        ↓
-Interactive visualization
-        ↓
-Presentation-quality rendering
-```
-
-The scientific result and the cinematic presentation therefore use the same underlying trajectory.
-
----
-
-# 🪐 Supported Systems
-
-Celestia includes a built-in mass catalogue containing:
-
-* Sun
-* Mercury
-* Venus
-* Earth
-* Moon
-* Mars
-* Jupiter
-* Saturn
-* Uranus
-* Neptune
-* Pluto
-* Custom
-
-The system can therefore be used to explore a range of mass ratios.
-
-Custom bodies can also be configured manually.
-
-When both bodies are set to **Custom**, the orbital map can be used interactively to place the two bodies and derive their separation from the selected coordinates.
-
----
-
-# 🖱️ Interactive Workflow
-
-A typical Celestia experiment looks like this:
-
-### 01 — Configure the system
-
-Choose the primary and secondary bodies.
-
-```text
-Primary Body
-Secondary Body
-Separation
-```
-
-Celestia calculates:
-
-$$ \mu=\frac{m_2}{m_1+m_2} $$
-
----
-
-### 02 — Inspect the equilibrium geometry
-
-The five Lagrange points are calculated dynamically.
-
-```text
-             L4
-
-              ◆
-
-L3 ◆ ─── Primary ─── L1 ─── Secondary ─── ◆ L2
-
-              ◆
-
-             L5
-```
-
----
-
-### 03 — Select an equilibrium
-
-Choose:
-
-```text
-L1
-L2
-L3
-L4
-L5
-```
-
-The interface displays the corresponding stability classification.
-
----
-
-### 04 — Perturb the satellite
-
-Adjust:
-
-```text
-Move in / out
-Move sideways
-Velocity trim
-```
-
----
-
-### 05 — Integrate
-
-Celestia initializes REBOUND and numerically integrates the system using IAS15.
-
----
-
-### 06 — Transform the trajectory
-
-The inertial trajectory is converted into rotating-frame coordinates.
-
----
-
-### 07 — Analyze
-
-Inspect:
-
-* trajectory shape;
-* stability;
-* maximum deviation;
-* Jacobi constant;
-* mass ratio;
-* orbital period.
-
----
-
-### 08 — Render
-
-Export the simulation as a cinematic Manim animation.
-
----
-
-# 🧑‍💻 Code Structure & Architecture
-
-Celestia's codebase is designed with a strict separation of concerns, ensuring scientific rigor while maintaining an interactive, real-time user interface.
-
-<details open>
-<summary><b><code>app.py</code> — The Application Core</b></summary>
-<blockquote>
-Orchestrates the entire Streamlit application. It manages the UI layout, captures user input for system configuration and perturbations, and wires together the physics engine, numerical simulation, and rendering pipelines. 
-<br><i>Key responsibilities: State management, Telemetry display, Video export triggering.</i>
-</blockquote>
 </details>
 
 <details>
-<summary><b><code>physics.py</code> — CR3BP Mathematics</b></summary>
-<blockquote>
-The analytical heart of Celestia. Implements the <i>Circular Restricted Three-Body Problem</i> equations, dynamically calculating the normalized mass ratio (<code>μ</code>) and the precise coordinates of the five Lagrange points.
-<br><i>Key methods: <code>compute_L1</code>, <code>compute_L2</code>, <code>compute_L3</code>, Eigenvalue stability analysis, Jacobi constant derivation.</i>
-</blockquote>
-</details>
+<summary><b>🔄 Inertial → rotating frame</b></summary>
 
-<details>
-<summary><b><code>rebound_sim.py</code> — Numerical Dynamics Engine</b></summary>
-<blockquote>
-Wraps the powerful <b>REBOUND</b> N-body library. Initializes the primary bodies and the test satellite, then performs high-accuracy numerical integration using the <b>IAS15</b> integrator to trace the perturbed trajectory over time.
-</blockquote>
-</details>
+<br/>
 
-<details>
-<summary><b><code>frames.py</code> — Coordinate Transformations</b></summary>
-<blockquote>
-A dedicated module for translating the inertial trajectories calculated by REBOUND into the rotating reference frame of the two primary bodies, making the Lagrange points appear stationary.
-</blockquote>
-</details>
+REBOUND evolves the system in an inertial frame, but Lagrange points are only stationary in the frame co-rotating with the primaries. With $\theta = \omega t$:
 
-<details>
-<summary><b><code>viz.py</code> & <code>manim_viz.py</code> — The Visualization Layer</b></summary>
-<blockquote>
-<b><code>viz.py</code>:</b> Uses <i>Plotly</i> to render the interactive 2D orbital plane and the rich 3D potential terrain.<br>
-<b><code>manim_viz.py</code>:</b> An advanced rendering pipeline using <i>Manim</i> to export the numerical simulation into a presentation-quality, cinematic MP4 animation.
-</blockquote>
-</details>
-
-<br>
-
-```text
-celestia/
-├── app.py             # Main Streamlit UI & Orchestration
-├── physics.py         # CR3BP Math, Lagrange solvers, Stability
-├── rebound_sim.py     # REBOUND/IAS15 numerical integration
-├── frames.py          # Inertial → Rotating transformations
-├── viz.py             # Plotly 2D/3D Interactive graphics
-├── manim_viz.py       # Manim Cinematic MP4 generation
-├── requirements.txt   # Dependencies
-└── logo.png           # Visual identity
+```math
+x_r = x\cos\theta + y\sin\theta, \qquad y_r = -x\sin\theta + y\cos\theta
 ```
 
----
+`frames.py` applies this to the whole trajectory with vectorised NumPy.
 
-# 🛠️ Technology Stack
+</details>
 
-<div align="center">
+<img src="./assets/readme/divider.svg" width="100%" alt=""/>
 
-| Technology    | Role                                    |
-| ------------- | --------------------------------------- |
-| **Python**    | Core implementation                     |
-| **Streamlit** | Interactive scientific application      |
-| **NumPy**     | Numerical computation and vectorization |
-| **SciPy**     | Numerical root finding                  |
-| **REBOUND**   | Gravitational N-body integration        |
-| **IAS15**     | High-accuracy numerical integrator      |
-| **Plotly**    | Interactive 2D/3D visualization         |
-| **Manim**     | Cinematic scientific rendering          |
-| **FFmpeg**    | Video encoding / rendering dependency   |
+## 🧪 Run an experiment
 
-</div>
+<table>
+<tr><th>Step</th><th>You</th><th>Celestia</th></tr>
+<tr><td><code>01</code></td><td>Pick <b>Earth</b> and <b>Moon</b></td><td>Derives <code>μ ≈ 0.01215</code> and the orbital period</td></tr>
+<tr><td><code>02</code></td><td>Select <b>L4</b></td><td>Solves all five points and reports the stability verdict</td></tr>
+<tr><td><code>03</code></td><td>Leave perturbations near zero</td><td>The satellite sits still in the rotating frame</td></tr>
+<tr><td><code>04</code></td><td>Nudge <b>in/out</b>, <b>sideways</b> or <b>velocity</b></td><td>Integrates with IAS15 and transforms to the rotating frame</td></tr>
+<tr><td><code>05</code></td><td>Repeat at <b>L1, L2, L3, L5</b></td><td>Compare libration against escape</td></tr>
+<tr><td><code>06</code></td><td>Open the 3D terrain or export</td><td>Shows the potential landscape or renders an MP4</td></tr>
+</table>
 
----
+**Telemetry reported for every run**
 
-# 🚀 Getting Started
+| Metric | Meaning |
+| :-- | :-- |
+| **Maximum deviation** | Largest displacement of the trajectory from its starting point |
+| **Jacobi constant** | Conserved rotating-frame quantity, $C = 2\Omega - v^2$ |
+| **Mass ratio μ** | Secondary-to-total mass ratio |
+| **Orbital period** | Period of the two primaries from their total mass and separation |
 
-## Prerequisites
+<sub>🪐 Body catalogue: Sun · Mercury · Venus · Earth · Moon · Mars · Jupiter · Saturn · Uranus · Neptune · Pluto · Custom</sub>
 
-Celestia requires:
+<img src="./assets/readme/divider.svg" width="100%" alt=""/>
 
-* Python 3.x
-* `pip`
-* FFmpeg
-* a system capable of running Streamlit and the Manim rendering stack
+<a id="quick-start"></a>
 
-FFmpeg is required for the cinematic video-rendering pipeline.
+## 🚀 Quick Start
 
----
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## Desktop Application (No Python Required)
+### 🌐 In the browser
+No install. Open the hosted lab:
 
-The easiest way to run Celestia is to use the pre-packaged standalone executables. You do not need Python or any dependencies installed.
+**[celestia-website.onrender.com](https://celestia-website.onrender.com)**
 
-1. Go to the **[Releases](https://github.com/priyanshusharan-cmd/celestia/releases)** page of this repository.
-2. Download the executable for your operating system:
-   - **Windows:** Download `Celestia-Windows.exe`
-   - **Mac:** Download `Celestia-macOS`
-3. Double-click the downloaded file to run it.
-4. A local server will start in the background, and your default web browser will automatically open Celestia!
+<sub>Free hosting: the first load can take ~30 s to wake up.</sub>
 
-*(Note: On Mac, you may need to right-click the file and select "Open" to bypass the unrecognized developer warning, or grant it execute permissions via terminal: `chmod +x Celestia-macOS`).*
+</td>
+<td width="33%" valign="top">
 
----
+### 💻 Desktop app
+No Python needed. Grab the build for your OS from **[Releases](https://github.com/priyanshusharan-cmd/celestia/releases/latest)**:
 
-## Installation from Source (For Developers)
+- `Celestia-Windows.exe`
+- `Celestia-macOS`
 
-Clone the repository:
+<sub>macOS: right-click → Open the first time, or <code>chmod +x Celestia-macOS</code>.</sub>
+
+</td>
+<td width="33%" valign="top">
+
+### 🐳 Docker
+```bash
+docker build -t celestia .
+docker run -p 8501:8501 celestia
+```
+Then open `localhost:8501`.
+
+</td>
+</tr>
+</table>
+
+**From source** (Python 3.11 and FFmpeg; FFmpeg is needed for the cinematic export)
 
 ```bash
 git clone https://github.com/priyanshusharan-cmd/celestia.git
 cd celestia
-```
-
-Install the Python dependencies:
-
-```bash
 pip install -r requirements.txt
-```
-
-Launch Celestia:
-
-```bash
 streamlit run app.py
 ```
 
-Streamlit will provide a local URL where the Orbital Dynamics Laboratory can be opened in your browser.
+**Tests**
 
----
-
-# 🔬 Running a First Experiment
-
-A simple first experiment is an Earth–Moon configuration.
-
-### Step 1
-
-Select:
-
-```text
-Primary Body   → Earth
-Secondary Body → Moon
+```bash
+python -m unittest discover tests
 ```
 
-### Step 2
-
-Select:
-
-```text
-L4
-```
-
-### Step 3
-
-Leave the perturbations near zero.
-
-### Step 4
-
-Observe the trajectory in the rotating reference frame.
-
-### Step 5
-
-Increase the position or velocity perturbation.
-
-### Step 6
-
-Compare the resulting trajectory with the equilibrium configuration.
-
-Repeat the experiment with L1, L2, L3, L4 and L5 to observe the dramatically different dynamical behavior.
-
----
-
-# 📐 Units & Normalization
-
-Celestia's CR3BP calculations use normalized dynamical units internally.
-
-The canonical geometry uses:
-
-```text
-Barycenter = (0, 0)
-Primary 1  = (-μ, 0)
-Primary 2  = (1-μ, 0)
-```
-
-The physical system is then scaled according to the selected masses and separation.
-
-This normalization allows the same mathematical machinery to work across systems with radically different physical scales.
-
----
-
-# ⚠️ Scientific Scope
-
-Celestia is intentionally based on the **Circular Restricted Three-Body Problem**.
-
-Therefore, the model makes important simplifying assumptions.
-
-### The model assumes:
-
-* the two primary bodies form the dominant gravitational system;
-* their orbits are approximately circular;
-* the satellite has negligible mass;
-* relativistic effects are ignored;
-* non-gravitational forces are ignored;
-* atmospheric drag is ignored;
-* solar radiation pressure is ignored;
-* planetary ephemerides are not used;
-* the primary bodies are treated as point masses.
-
-Therefore, Celestia should be understood as a **scientific simulation and educational laboratory**, not as a flight-certified mission-design system.
-
-For real mission planning, higher-fidelity ephemerides and additional perturbation models would be required.
-
----
-
-# 🧠 Design Philosophy
-
-Celestia was designed around three principles:
-
-### 1. Physics first
-
-The visualization should be generated from the numerical model rather than being a decorative animation disconnected from the physics.
-
-### 2. Experiment over observation
-
-Users should be able to perturb an equilibrium and observe the dynamical consequence.
-
-### 3. Scientific computing should be beautiful
-
-Complex orbital mechanics does not need to be presented through an intimidating research interface.
-
-Celestia combines numerical rigor with a visual language inspired by spacecraft mission-control systems and deep-space instrumentation.
-
----
-
-# 📈 Future Development
-
-Possible extensions include:
-
-* higher-fidelity planetary ephemerides;
-* non-circular restricted three-body dynamics;
-* solar radiation pressure;
-* atmospheric drag models;
-* spacecraft finite-mass modeling;
-* halo and Lissajous orbit analysis;
-* zero-velocity surface visualization;
-* automated stability maps;
-* trajectory optimization;
-* fuel / Δv analysis;
-* Lambert-transfer calculations;
-* multi-spacecraft simulations;
-* 3D spatial trajectories;
-* mission-design presets for real Earth–Moon and Sun–Earth missions.
-
----
-
-# 📚 Scientific Foundations
-
-Celestia is built around classical concepts from:
-
-* celestial mechanics;
-* the Circular Restricted Three-Body Problem;
-* rotating reference frames;
-* gravitational potential theory;
-* Lagrange equilibrium points;
-* linear stability analysis;
-* numerical ordinary differential equation integration;
-* N-body gravitational dynamics.
-
-The implementation intentionally exposes these concepts through interactive computation rather than treating them as static educational material.
-
----
-
-# 🏆 Project Highlights
-
-- **Mathematical Model:** CR3BP + dynamically solved Lagrange points
-- **Numerical Engine:** REBOUND + IAS15
-- **Stability:** Linearized rotating-frame eigenvalue analysis
-- **Visualization:** Interactive 2D + 3D Plotly environments
-- **Rendering:** Manim cinematic orbital animation
-- **Interaction:** Live mass, separation and perturbation controls
-
----
-
-# 📁 Repository
+<details>
+<summary><b>📁 Repository layout</b></summary>
 
 ```text
 celestia/
-│
-├── app.py
-├── physics.py
-├── rebound_sim.py
-├── frames.py
-├── viz.py
-├── manim_viz.py
-├── requirements.txt
-├── logo.png
-└── README.md
+├── app.py              Streamlit UI, state, telemetry, video export
+├── physics.py          CR3BP maths, Lagrange solvers, stability, Jacobi constant
+├── rebound_sim.py      REBOUND / IAS15 integration
+├── frames.py           Inertial → rotating transformation
+├── viz.py              Plotly 2D plane, 3D potential terrain, cinematic orbit
+├── manim_viz.py        Manim scene and MP4 rendering
+├── run_app.py          Desktop entry point
+├── build.py            PyInstaller build script
+├── tests/              Physics, frame and simulation tests
+├── Dockerfile          Production image (Render)
+├── .github/workflows/  Container check and desktop release builds
+└── assets/readme/      Animated README artwork
 ```
 
----
+</details>
 
-# 👨‍🚀 Team & Credits
+<img src="./assets/readme/divider.svg" width="100%" alt=""/>
 
-**Celestia** was developed for:
+## ⚠️ Scientific scope
 
-### Singularity — The Astronomical Society of BMSCE
+Celestia is a **scientific simulation and teaching laboratory**, not a flight-certified mission-design tool. The CR3BP assumes:
 
-as a submission for the **Cosmic Code Hackathon 2026**.
+`circular primary orbits` · `point masses` · `massless satellite` · `no relativity` · `no drag` · `no solar radiation pressure` · `no ephemerides`
 
-The project combines software engineering, numerical simulation, astronomy, orbital mechanics and scientific visualization into a single interactive laboratory.
+Real mission planning needs higher-fidelity ephemerides and perturbation models.
 
----
+## 🧠 Design philosophy
+
+1. **Physics first.** Every animation is generated from the numerical model, never decoration.
+2. **Experiment over observation.** Disturb the equilibrium and see what the dynamics do.
+3. **Scientific computing should be beautiful.** Rigorous maths behind a mission-control interface.
+
+## 🗺️ Roadmap
+
+- [x] Dynamic Lagrange solver for any mass ratio
+- [x] Eigenvalue stability classification
+- [x] REBOUND / IAS15 integration with rotating-frame transform
+- [x] 2D, 3D and cinematic visualisation with MP4 export
+- [x] Hosted web app and Windows / macOS desktop builds
+- [ ] Zero-velocity surfaces and automated stability maps
+- [ ] Halo and Lissajous orbit families
+- [ ] Elliptic restricted problem and 3D spatial trajectories
+- [ ] Solar radiation pressure and drag models
+- [ ] Δv budgets, Lambert transfers and mission presets
+
+<img src="./assets/readme/divider.svg" width="100%" alt=""/>
 
 <div align="center">
 
-## ✦ Explore the Equilibria. Disturb the System. Understand the Orbit. ✦
+<img src="./logo.png" alt="Celestia logo" width="110"/>
 
-**CELESTIA**
-*Explore · Simulate · Orbit · Beyond*
+### Explore the equilibria. Disturb the system. Understand the orbit.
 
-<sub>Built with Python · NumPy · SciPy · REBOUND · Plotly · Streamlit · Manim</sub>
+Built for **Singularity, the Astronomical Society of BMSCE**<br/>
+as a submission to the **Cosmic Code Hackathon 2026**
 
-<h4>Built by <b>Priyanshu Sharan</b></h4>
+<sub>Python · NumPy · SciPy · REBOUND · Plotly · Streamlit · Manim</sub>
 
-<a href="https://www.linkedin.com/in/priyanshusharan/">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn Profile" width="30" style="border-radius: 4px;"/>
-</a>
+<br/><br/>
+
+Made by **Priyanshu Sharan**
+
+<a href="https://github.com/priyanshusharan-cmd"><img src="https://img.shields.io/badge/GitHub-priyanshusharan--cmd-EAF0FF?style=flat-square&labelColor=0B1838&logo=github&logoColor=EAF0FF" alt="GitHub"/></a>
+<a href="https://www.linkedin.com/in/priyanshusharan/"><img src="https://img.shields.io/badge/LinkedIn-Priyanshu_Sharan-EAF0FF?style=flat-square&labelColor=0B1838&logo=linkedin&logoColor=4C8DFF" alt="LinkedIn"/></a>
+
+<sub>Released under the <a href="./LICENSE">MIT License</a>.</sub>
 
 </div>
-
