@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300" width="520" height="300" role="img" aria-label="Celestia emblem: two bodies on a circular orbit with their L4 and L5 Lagrange points, above the Celestia wordmark.">
+  <defs>
+    <style>
+      .sans { font-family: 'Avenir Next', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+      .mono { font-family: 'SF Mono', 'JetBrains Mono', Menlo, Consolas, 'Liberation Mono', monospace; }
+    </style>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#03060E"/>
+      <stop offset="0.6" stop-color="#071027"/>
+      <stop offset="1" stop-color="#0B1838"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.38" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#FFF4D6"/>
+      <stop offset="0.45" stop-color="#F5B841"/>
+      <stop offset="1" stop-color="#9A5A12"/>
+    </radialGradient>
+    <radialGradient id="planet" cx="0.35" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#9CD3FF"/>
+      <stop offset="0.5" stop-color="#2F7BEF"/>
+      <stop offset="1" stop-color="#0B2A6B"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#C9822B"/>
+      <stop offset="0.35" stop-color="#FFD98A"/>
+      <stop offset="0.5" stop-color="#FFF4D6"/>
+      <stop offset="0.65" stop-color="#FFD98A"/>
+      <stop offset="1" stop-color="#C9822B"/>
+      <animate attributeName="x1" values="-1;1" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="0;2" dur="6s" repeatCount="indefinite"/>
+    </linearGradient>
+    <filter id="halo" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="520" height="300" rx="18" fill="url(#bg)"/>
+  <g fill="#EAF0FF">
+    <circle cx="48" cy="40" r="0.8" opacity="0.6"/><circle cx="96" cy="210" r="0.6" opacity="0.4"/>
+    <circle cx="140" cy="86" r="1" opacity="0.5"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="4s" repeatCount="indefinite"/></circle>
+    <circle cx="392" cy="54" r="0.9" opacity="0.6"><animate attributeName="opacity" values="0.6;0.15;0.6" dur="5s" begin="1s" repeatCount="indefinite"/></circle>
+    <circle cx="468" cy="150" r="0.7" opacity="0.4"/><circle cx="430" cy="232" r="1" opacity="0.5"/>
+    <circle cx="62" cy="262" r="0.7" opacity="0.4"/><circle cx="352" cy="128" r="0.6" opacity="0.5"/>
+    <circle cx="184" cy="30" r="0.7" opacity="0.5"><animate attributeName="opacity" values="0.5;0.1;0.5" dur="3.4s" begin="2s" repeatCount="indefinite"/></circle>
+  </g>
+
+  <!-- Emblem: rotating frame of two bodies with L4 / L5 -->
+  <g transform="translate(260 112)">
+    <circle r="72" fill="none" stroke="#8FA6D6" stroke-opacity="0.28" stroke-dasharray="2 6"/>
+    <circle r="48" fill="none" stroke="#72E6DE" stroke-opacity="0.12"/>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="24s" repeatCount="indefinite"/>
+      <path d="M0,0 L36,-62.4 L72,0 L36,62.4 Z" fill="none" stroke="#72E6DE" stroke-opacity="0.35" stroke-dasharray="3 4"/>
+      <line x1="-80" y1="0" x2="84" y2="0" stroke="#8FA6D6" stroke-opacity="0.22"/>
+      <g fill="#03060E" stroke="#72E6DE" stroke-width="1.5">
+        <rect x="32" y="-66.4" width="8" height="8" transform="rotate(45 36 -62.4)"/>
+        <rect x="32" y="58.4" width="8" height="8" transform="rotate(45 36 62.4)"/>
+      </g>
+      <circle cx="36" cy="-62.4" r="4" fill="none" stroke="#72E6DE" opacity="0">
+        <animate attributeName="r" values="4;14" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.8;0" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="36" cy="62.4" r="4" fill="none" stroke="#72E6DE" opacity="0">
+        <animate attributeName="r" values="4;14" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.8;0" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="72" cy="0" r="10" fill="#2F7BEF" opacity="0.4" filter="url(#halo)"/>
+      <circle cx="72" cy="0" r="6.5" fill="url(#planet)"/>
+    </g>
+    <circle r="22" fill="#F5B841" opacity="0.4" filter="url(#halo)">
+      <animate attributeName="opacity" values="0.3;0.55;0.3" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="14" fill="url(#sun)" filter="url(#soft)"/>
+  </g>
+
+  <text x="266" y="238" text-anchor="middle" class="sans" font-size="38" font-weight="300" letter-spacing="12" fill="url(#gold)">CELESTIA</text>
+  <text x="262" y="266" text-anchor="middle" class="mono" font-size="11" letter-spacing="4" fill="#8FA6D6">EXPLORE · SIMULATE · ORBIT · BEYOND</text>
+</svg>

@@ -367,7 +367,7 @@ Real mission planning needs higher-fidelity ephemerides and perturbation models.
 
 <div align="center">
 
-<img src="./logo.png" alt="Celestia logo" width="110"/>
+<img src="./assets/readme/emblem.svg" alt="Celestia" width="360"/>
 
 ### Explore the equilibria. Disturb the system. Understand the orbit.
 
