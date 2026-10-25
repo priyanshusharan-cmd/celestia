@@ -181,10 +181,7 @@ C = 2\,\Omega(x,y) - \left(v_x^2 + v_y^2\right)
 </tr>
 </table>
 
-<details>
-<summary><b>📍 Collinear points L1, L2, L3</b></summary>
-
-<br/>
+#### 📍 Collinear points L1, L2, L3
 
 The collinear points are roots of the equilibrium condition on the x-axis:
 
@@ -200,12 +197,7 @@ x - (1-\mu)\frac{x+\mu}{|x+\mu|^3} - \mu\frac{x-1+\mu}{|x-1+\mu|^3} = 0
 
 with $r_1=\sqrt{(x+\mu)^2+y^2}$ and $r_2=\sqrt{(x-1+\mu)^2+y^2}$.
 
-</details>
-
-<details>
-<summary><b>🧭 Linear stability analysis</b></summary>
-
-<br/>
+#### 🧭 Linear stability analysis
 
 The Hessian of $\Omega$ at the chosen point ($\Omega_{xx}$, $\Omega_{yy}$, $\Omega_{xy}$) is estimated with central finite differences and placed in the linearised rotating-frame system:
 
@@ -216,12 +208,7 @@ A = \begin{bmatrix} 0&0&1&0\\ 0&0&0&1\\ \Omega_{xx}&\Omega_{xy}&0&2\\ \Omega_{xy
 If any eigenvalue of $A$ has a positive real part, the point is **unstable**; otherwise it is **stable**.
 For Earth–Moon (`μ ≈ 0.01215`) that yields L1–L3 unstable and L4/L5 stable. The animated banner above shows exactly this: a real tadpole libration around L4 and a real departure from L1.
 
-</details>
-
-<details>
-<summary><b>🧮 Numerical integration with REBOUND / IAS15</b></summary>
-
-<br/>
+#### 🧮 Numerical integration with REBOUND / IAS15
 
 ```python
 sim = rebound.Simulation()
@@ -234,12 +221,7 @@ Units are **AU, Earth masses and years**, so the Earth–Sun period comes out as
 **IAS15** is adaptive and accurate to machine precision, which matters when the whole experiment is about the response to *small* changes in the initial state.
 Integration stops early if the satellite leaves the map (`escape_radius`).
 
-</details>
-
-<details>
-<summary><b>🔄 Inertial → rotating frame</b></summary>
-
-<br/>
+#### 🔄 Inertial → rotating frame
 
 REBOUND evolves the system in an inertial frame, but Lagrange points are only stationary in the frame co-rotating with the primaries. With $\theta = \omega t$:
 
@@ -248,8 +230,6 @@ x_r = x\cos\theta + y\sin\theta, \qquad y_r = -x\sin\theta + y\cos\theta
 ```
 
 `frames.py` applies this to the whole trajectory with vectorised NumPy.
-
-</details>
 
 <img src="./assets/readme/divider.svg" width="100%" alt=""/>
 
